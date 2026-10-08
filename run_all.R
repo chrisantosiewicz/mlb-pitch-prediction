@@ -10,7 +10,10 @@ steps <- c(
   "pipeline/04_baseline.R",    # models/baseline.json      + docs/baseline_results.md
   "pipeline/05_mixes.R",       # pitcher-mix layers        + docs/mix_results.md
   "pipeline/06_features.R",    # data/features/features_<season>.parquet
-  "pipeline/07_logistic.R"     # models/logistic_*.rds     + docs/logistic_results.md
+  "pipeline/07_logistic.R",    # models/logistic_*.rds     + docs/logistic_results.md
+  "pipeline/08_batter.R",      # batter layer              + models/batter.json
+  "pipeline/09_tune_models.R", # batter layer check, xgboost rounds -> models/tuning.json
+  "pipeline/10_test_2026.R"    # one-time 2026 test        + docs/test_results.md
 )
 
 for (step in steps) {
