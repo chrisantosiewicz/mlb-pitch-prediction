@@ -1,0 +1,24 @@
+# data is too big for git; published as GitHub Release assets
+data/
+!data/.gitkeep
+*.parquet
+*.duckdb
+*.duckdb.wal
+
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+renv/local/
+
+# Quarto
+/.quarto/
+_site/
+_freeze/
+*_files/
+
+# logs
+logs/

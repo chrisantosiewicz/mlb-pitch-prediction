@@ -1,0 +1,121 @@
+field,group,meaning,known_when,use
+pitch_type,Pitch,"Savant's pitch classification code (FF, SL, ST, ...). Mapped to 8 pitch groups.",after pitch,target
+game_date,Identifiers,Date of the game (local).,id,id
+release_speed,Pitch,Velocity at release (mph).,after pitch,report
+release_pos_x,Pitch,Horizontal release point from catcher's view (ft).,after pitch,report
+release_pos_z,Pitch,Vertical release point (ft).,after pitch,report
+player_name,Identifiers,Batter's name (Last; First). Not the pitcher.,id,id
+batter,Identifiers,MLBAM id of the batter.,id,id
+pitcher,Identifiers,MLBAM id of the pitcher.,id,id
+events,Outcome,"Result of the plate appearance (single, strikeout, ...). Only filled on the PA's last pitch.",after PA,report
+description,Outcome,"Result of the pitch (ball, called_strike, swinging_strike, hit_into_play, ...).",after pitch,report
+spin_dir,Deprecated,Old PITCHf/x field. Always empty.,deprecated,dropped
+spin_rate_deprecated,Deprecated,Old PITCHf/x field. Always empty.,deprecated,dropped
+break_angle_deprecated,Deprecated,Old PITCHf/x field. Always empty.,deprecated,dropped
+break_length_deprecated,Deprecated,Old PITCHf/x field. Always empty.,deprecated,dropped
+zone,Pitch,Gameday zone 1-9 (in the strike zone) or 11-14 (outside).,after pitch,report
+des,Outcome,Play-by-play text of the PA result.,after PA,dropped
+game_type,Identifiers,"R = regular season, S = spring, E = exhibition, F/D/L/W = postseason rounds.",id,filter
+stand,Matchup,Batter's side for this PA (L/R). Switch hitters take the side they bat from.,before pitch,feature
+p_throws,Matchup,Pitcher's throwing hand (L/R).,before pitch,feature
+home_team,Identifiers,Home team abbreviation.,id,id
+away_team,Identifiers,Away team abbreviation.,id,id
+type,Outcome,"Simplified pitch result: B = ball, S = strike (incl. fouls), X = in play.",after pitch,report
+hit_location,Outcome,Fielder position number who first touched a batted ball.,after pitch,dropped
+bb_type,Outcome,"Batted-ball type (ground_ball, line_drive, fly_ball, popup).",after pitch,report
+balls,Game state,Balls in the count before this pitch.,before pitch,feature
+strikes,Game state,Strikes in the count before this pitch.,before pitch,feature
+game_year,Identifiers,Season.,id,id
+pfx_x,Pitch,Horizontal movement vs. a spinless pitch (ft; catcher's view).,after pitch,report
+pfx_z,Pitch,Induced vertical movement (ft).,after pitch,report
+plate_x,Pitch,Horizontal location crossing the plate (ft from center; catcher's view).,after pitch,report
+plate_z,Pitch,Height crossing the plate (ft above ground).,after pitch,report
+on_3b,Game state,MLBAM id of the runner on third before the pitch (empty if none).,before pitch,feature
+on_2b,Game state,MLBAM id of the runner on second before the pitch.,before pitch,feature
+on_1b,Game state,MLBAM id of the runner on first before the pitch.,before pitch,feature
+outs_when_up,Game state,Outs before the pitch.,before pitch,feature
+inning,Game state,Inning number.,before pitch,feature
+inning_topbot,Game state,Top or Bot. Used to work out which team is pitching.,before pitch,feature
+hc_x,Outcome,Hit coordinate x on the Gameday field image.,after pitch,dropped
+hc_y,Outcome,Hit coordinate y on the Gameday field image.,after pitch,dropped
+tfs_deprecated,Deprecated,Old timestamp field. Always empty.,deprecated,dropped
+tfs_zulu_deprecated,Deprecated,Old timestamp field. Always empty.,deprecated,dropped
+umpire,Deprecated,Home-plate umpire id. Always empty in the public feed.,deprecated,dropped
+sv_id,Identifiers,Old PITCHf/x pitch timestamp id. Mostly empty since 2017.,id,dropped
+vx0,Pitch,Velocity x at y = 50 ft (ft/s). Trajectory physics.,after pitch,dropped
+vy0,Pitch,Velocity y at y = 50 ft (ft/s).,after pitch,dropped
+vz0,Pitch,Velocity z at y = 50 ft (ft/s).,after pitch,dropped
+ax,Pitch,Acceleration x (ft/s^2).,after pitch,dropped
+ay,Pitch,Acceleration y (ft/s^2).,after pitch,dropped
+az,Pitch,Acceleration z (ft/s^2).,after pitch,dropped
+sz_top,Pitch,Top of the batter's strike zone for this pitch (ft). Set by tracking on each pitch.,after pitch,report
+sz_bot,Pitch,Bottom of the batter's strike zone for this pitch (ft).,after pitch,report
+hit_distance_sc,Outcome,Projected batted-ball distance (ft).,after pitch,dropped
+launch_speed,Outcome,Exit velocity (mph).,after pitch,report
+launch_angle,Outcome,Launch angle (degrees).,after pitch,report
+effective_speed,Pitch,Velocity adjusted for extension (perceived velocity).,after pitch,report
+release_spin_rate,Pitch,Spin rate at release (rpm).,after pitch,report
+release_extension,Pitch,Release distance in front of the rubber (ft).,after pitch,report
+game_pk,Identifiers,Unique game id.,id,id
+fielder_2,Defense,MLBAM id of the catcher. Known before the pitch but not used (catcher effects are out of scope).,before pitch,dropped
+fielder_3,Defense,First baseman id.,before pitch,dropped
+fielder_4,Defense,Second baseman id.,before pitch,dropped
+fielder_5,Defense,Third baseman id.,before pitch,dropped
+fielder_6,Defense,Shortstop id.,before pitch,dropped
+fielder_7,Defense,Left fielder id.,before pitch,dropped
+fielder_8,Defense,Center fielder id.,before pitch,dropped
+fielder_9,Defense,Right fielder id.,before pitch,dropped
+release_pos_y,Pitch,Release distance from home plate (ft).,after pitch,dropped
+estimated_ba_using_speedangle,Outcome,Expected batting average from exit velocity and launch angle (xBA).,after pitch,report
+estimated_woba_using_speedangle,Outcome,"Expected wOBA from exit velocity and launch angle (xwOBA on contact). Walks, HBP and strikeouts carry their actual wOBA value in woba_value.",after pitch,report
+woba_value,Outcome,wOBA credit for the PA result (on the PA's last pitch).,after PA,report
+woba_denom,Outcome,1 if the PA counts toward the wOBA denominator.,after PA,report
+babip_value,Outcome,BABIP credit for the PA result.,after PA,dropped
+iso_value,Outcome,ISO credit for the PA result.,after PA,dropped
+launch_speed_angle,Outcome,"Batted-ball quality bucket 1-6 (weak, topped, under, flare/burner, solid, barrel).",after pitch,dropped
+at_bat_number,Identifiers,PA number within the game (both teams).,id,id
+pitch_number,Identifiers,Pitch number within the PA.,id,id
+pitch_name,Pitch,"Full pitch name for pitch_type (e.g., 4-Seam Fastball).",after pitch,report
+home_score,Game state,Home score before the pitch.,before pitch,dropped
+away_score,Game state,Away score before the pitch.,before pitch,dropped
+bat_score,Game state,Batting team's score before the pitch.,before pitch,feature
+fld_score,Game state,Fielding (pitching) team's score before the pitch.,before pitch,feature
+post_away_score,Outcome,Away score after the pitch.,after pitch,dropped
+post_home_score,Outcome,Home score after the pitch.,after pitch,dropped
+post_bat_score,Outcome,Batting team's score after the pitch.,after pitch,dropped
+post_fld_score,Outcome,Fielding team's score after the pitch.,after pitch,dropped
+if_fielding_alignment,Defense,"Infield alignment (Standard, Strategic, Infield shade). Set before the pitch but recorded by tracking.",before pitch,report
+of_fielding_alignment,Defense,"Outfield alignment (Standard, Strategic, 4th outfielder).",before pitch,report
+spin_axis,Pitch,Spin axis (degrees; 180 = pure backspin for a RHP fastball).,after pitch,report
+delta_home_win_exp,Outcome,Change in home win expectancy from this pitch.,after pitch,dropped
+delta_run_exp,Outcome,Change in run expectancy from this pitch (pitch value).,after pitch,report
+bat_speed,Outcome,Bat speed on swings (mph; 2024+ tracking).,after pitch,report
+swing_length,Outcome,Swing length (ft; 2024+ tracking).,after pitch,report
+miss_distance,Outcome,How far a swing missed the ball (newer tracking).,after pitch,dropped
+estimated_slg_using_speedangle,Outcome,Expected slugging from exit velocity and launch angle.,after pitch,dropped
+delta_pitcher_run_exp,Outcome,Change in run expectancy from the pitcher's side.,after pitch,dropped
+hyper_speed,Outcome,Adjusted exit velocity (Savant's hyper speed).,after pitch,dropped
+home_score_diff,Game state,Home score minus away score before the pitch.,before pitch,dropped
+bat_score_diff,Game state,Batting score minus fielding score before the pitch. Same information as score_diff (sign flipped).,before pitch,dropped
+home_win_exp,Game state,Home win expectancy before the pitch (Savant model).,before pitch,dropped
+bat_win_exp,Game state,Batting team win expectancy before the pitch (Savant model).,before pitch,dropped
+age_pit_legacy,Matchup,Pitcher age (older Savant definition).,before pitch,dropped
+age_bat_legacy,Matchup,Batter age (older Savant definition).,before pitch,dropped
+age_pit,Matchup,Pitcher age for the season.,before pitch,report
+age_bat,Matchup,Batter age for the season.,before pitch,report
+n_thruorder_pitcher,Game state,Times through the order: how many times this batter has faced this pitcher in the game (1 = first time).,before pitch,feature
+n_priorpa_thisgame_player_at_bat,Game state,Prior PAs by this batter in this game (any pitcher).,before pitch,report
+pitcher_days_since_prev_game,Matchup,Days since the pitcher's previous appearance.,before pitch,report
+batter_days_since_prev_game,Matchup,Days since the batter's previous game.,before pitch,dropped
+pitcher_days_until_next_game,Leakage,Days until the pitcher's NEXT appearance. Only known in hindsight; never usable.,future,dropped
+batter_days_until_next_game,Leakage,Days until the batter's NEXT game. Only known in hindsight; never usable.,future,dropped
+api_break_z_with_gravity,Pitch,Vertical break including gravity (in).,after pitch,dropped
+api_break_x_arm,Pitch,Horizontal break toward the pitcher's arm side (in).,after pitch,dropped
+api_break_x_batter_in,Pitch,Horizontal break toward the batter (in).,after pitch,dropped
+arm_angle,Pitch,Pitcher's arm angle at release (degrees).,after pitch,report
+attack_angle,Outcome,Bat's vertical attack angle at contact (newer tracking).,after pitch,dropped
+attack_direction,Outcome,Bat's horizontal direction at contact (newer tracking).,after pitch,dropped
+swing_path_tilt,Outcome,Tilt of the swing plane (newer tracking).,after pitch,dropped
+intercept_ball_minus_batter_pos_x_inches,Outcome,Where the bat met the ball relative to the batter (x).,after pitch,dropped
+intercept_ball_minus_batter_pos_y_inches,Outcome,Where the bat met the ball relative to the batter (y).,after pitch,dropped
+pulled_at,Bookkeeping,When this day was downloaded (added by our pipeline). Used to keep the newest copy of a re-pulled pitch.,id,id

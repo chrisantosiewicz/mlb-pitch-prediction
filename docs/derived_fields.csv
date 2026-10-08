@@ -1,0 +1,16 @@
+field,meaning,known_when,use
+pitcher_name,"Pitcher's full name, from the MLB Stats API.",id,id
+batter_name,Batter's name (Statcast player_name renamed for clarity).,id,id
+pitch_group,"One of 8 groups: FF, SI, FC, SL, ST, CU (curve, knuckle curve, slurve, slow curve), CH, FS (splitter, forkball). Empty for pitches outside the groups.",after pitch,target
+pitch_group_name,Readable name of pitch_group.,after pitch,report
+target_status,"model = a prediction target; non_pitch = automatic ball/strike, pitchout or intentional ball; rare_type = eephus, knuckleball, etc.; unclassified = no pitch type.",after pitch,filter
+pitcher_team,Team the pitcher plays for in this game (home team when inning_topbot = Top).,before pitch,report
+batter_team,Team the batter plays for in this game.,before pitch,report
+count_str,"Count before the pitch as text, e.g. 1-2.",before pitch,feature
+runners_on,Number of runners on base before the pitch (0-3).,before pitch,feature
+base_state,"Which bases are occupied, e.g. 1_3 = first and third.",before pitch,feature
+score_diff,Pitching team's score minus batting team's score before the pitch (positive = pitcher's team leads).,before pitch,feature
+pa_id,Unique plate-appearance id: game_pk * 1000 + at_bat_number.,id,id
+pitcher_game_pitch_no,The pitcher's pitch count in this game before and including this pitch (1 = first pitch of his outing).,before pitch,feature
+pitcher_game_pa_no,Which batter faced (1st PA of the outing = 1) this pitch belongs to.,before pitch,feature
+is_starter,"TRUE if this pitcher threw his team's first pitch of the game. Known before the game starts, so allowed as a feature.",before pitch,feature
