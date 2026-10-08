@@ -1,0 +1,121 @@
+{
+  "app_model": "xgboost",
+  "rule_kept": false,
+  "scores": [
+    {
+      "model": "L1 prior mix (Phase 1 baseline)",
+      "log_loss": 1.579943,
+      "top1": 0.372377,
+      "family_log_loss": 0.915894,
+      "family_top1": 0.561823
+    },
+    {
+      "model": "L2 + current form",
+      "log_loss": 1.417414,
+      "top1": 0.390352,
+      "family_log_loss": 0.887834,
+      "family_top1": 0.567123
+    },
+    {
+      "model": "L3 + platoon tilt",
+      "log_loss": 1.390309,
+      "top1": 0.401347,
+      "family_log_loss": 0.872512,
+      "family_top1": 0.567723
+    },
+    {
+      "model": "Logistic, 8 pitches",
+      "log_loss": 1.326739,
+      "top1": 0.432688,
+      "family_log_loss": 0.832818,
+      "family_top1": 0.584064
+    },
+    {
+      "model": "Logistic, family then pitch",
+      "log_loss": 1.34926,
+      "top1": 0.424042,
+      "family_log_loss": 0.831463,
+      "family_top1": 0.58517
+    },
+    {
+      "model": "Logistic, 8 pitches + batter layer",
+      "log_loss": 1.323526,
+      "top1": 0.435635,
+      "family_log_loss": 0.83034,
+      "family_top1": 0.587038
+    },
+    {
+      "model": "xgboost",
+      "log_loss": 1.282822,
+      "top1": 0.447009,
+      "family_log_loss": 0.809006,
+      "family_top1": 0.597276
+    },
+    {
+      "model": "Pre-registered rule (family on relabels)",
+      "log_loss": 1.326815,
+      "top1": 0.432661,
+      "family_log_loss": 0.832822,
+      "family_top1": 0.584054
+    }
+  ],
+  "comparisons": [
+    {
+      "comparison": "L3 + platoon tilt vs. L1 prior mix (Phase 1 baseline)",
+      "pitches": 711703,
+      "difference": -0.189634,
+      "lower": -0.193691,
+      "upper": -0.186273
+    },
+    {
+      "comparison": "Logistic, 8 pitches vs. L3 + platoon tilt",
+      "pitches": 711703,
+      "difference": -0.06357,
+      "lower": -0.064717,
+      "upper": -0.062368
+    },
+    {
+      "comparison": "Logistic, 8 pitches + batter layer vs. Logistic, 8 pitches",
+      "pitches": 711703,
+      "difference": -0.003213,
+      "lower": -0.003555,
+      "upper": -0.002847
+    },
+    {
+      "comparison": "xgboost vs. Logistic, 8 pitches",
+      "pitches": 711703,
+      "difference": -0.043917,
+      "lower": -0.045191,
+      "upper": -0.04268
+    },
+    {
+      "comparison": "xgboost vs. Logistic, 8 pitches + batter layer",
+      "pitches": 711703,
+      "difference": -0.040704,
+      "lower": -0.042021,
+      "upper": -0.039318
+    },
+    {
+      "comparison": "xgboost vs. L1 prior mix (Phase 1 baseline)",
+      "pitches": 711703,
+      "difference": -0.29712,
+      "lower": -0.301429,
+      "upper": -0.293355
+    },
+    {
+      "comparison": "Pre-registered rule (family on relabels) vs. Logistic, 8 pitches",
+      "pitches": 711703,
+      "difference": 0.000076,
+      "lower": 0.000038,
+      "upper": 0.000119
+    },
+    {
+      "comparison": "Pre-registered rule (family on relabels) vs. Logistic, 8 pitches (relabel-repaired pitches only)",
+      "pitches": 2456,
+      "difference": 0.022083,
+      "lower": 0.011652,
+      "upper": 0.032157
+    }
+  ],
+  "created": "2026-10-08 14:52:31.345726"
+}

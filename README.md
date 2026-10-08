@@ -2,7 +2,7 @@
 
 Predicting a pitcher's next pitch type from game context, and turning it into a one-page pitcher-vs-batter advance report.
 
-**Status:** Phase 2 (features and multinomial logistic model) complete and in review. See [docs/phase2_summary.md](docs/phase2_summary.md). See [PLAN.md](PLAN.md) for the full roadmap.
+**Status:** Phase 3 (gradient boosting and the 2026 test) complete and in review. See [docs/phase3_summary.md](docs/phase3_summary.md) and [PLAN.md](PLAN.md).
 
 ## What's here so far
 
@@ -13,6 +13,8 @@ Predicting a pitcher's next pitch type from game context, and turning it into a 
 | [docs/baseline_results.md](docs/baseline_results.md) | The shrunken pitch-mix baseline every model has to beat |
 | [docs/mix_results.md](docs/mix_results.md) | Pitcher-mix layers: prior, current form, platoon tilt, relabel repair, mix-change flag |
 | [docs/logistic_results.md](docs/logistic_results.md) | The multinomial logistic context model vs. every baseline |
+| [docs/preregistration.md](docs/preregistration.md) | The 2026 test plan, committed before scoring |
+| [docs/test_results.md](docs/test_results.md) | The one-time 2026 test: every model, bootstrap intervals, calibration, per pitcher |
 | [docs/decisions.md](docs/decisions.md) | Every choice and the reason for it |
 
 ## Reproduce

@@ -44,3 +44,14 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | Ridge (L2) penalty, tuned on 2025 | Many correlated dummy variables (count x hand, previous pitch x result). Ridge keeps all of them but shrinks noisy ones; the penalty is chosen on the tuning season, never on 2026. |
 | Previous pitch result as a feature | Whether the last pitch was a whiff, foul, called strike or ball is known before the next pitch and is exactly what drives "go back to it" sequencing. |
 | Two versions: all 8 pitches, and family-then-pitch | Tests Chris's question directly: does the situation mainly decide fastball vs. breaking vs. offspeed, with the specific pitch coming from his mix? |
+
+## Phase 3 choices
+
+| Choice | Why |
+|---|---|
+| Pre-register the 2026 test (committed before scoring) | The test season is looked at once. Writing the models, metrics and decision rules down first means the headline numbers can't be shaped by the results. |
+| Batter layer as an offset tilt, shrunk with tau = 200 | How pitchers have attacked a hitter (observed vs. expected from their mixes, earlier games only). Shrinkage keeps hitters with little history near zero. |
+| xgboost with the same mix offset as base margin | Same starting point as the logistic model, so the comparison isolates what trees add: interactions. Rounds picked by early stopping on 2025. |
+| Bootstrap over games, not pitches | Pitches in the same game are correlated; resampling games gives honest intervals. |
+| App uses xgboost | Pre-registered rule: best 2026 log loss among models that beat L3, unless within the logistic model's interval. xgboost beat it clearly (0.041, interval 0.039 to 0.042). |
+| Family-on-relabels rule dropped | It was worse on 2026 relabel-repaired games (interval +0.012 to +0.032). The 2025 edge didn't replicate. |
