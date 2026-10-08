@@ -2,7 +2,7 @@
 
 Predicting a pitcher's next pitch type from game context, and turning it into a one-page pitcher-vs-batter advance report.
 
-**Status:** Phase 1 (data, cleaning, baseline) complete and in review. See [PLAN.md](PLAN.md) for the full roadmap.
+**Status:** Phase 2 (features and multinomial logistic model) complete and in review. See [docs/phase2_summary.md](docs/phase2_summary.md). See [PLAN.md](PLAN.md) for the full roadmap.
 
 ## What's here so far
 
@@ -11,6 +11,8 @@ Predicting a pitcher's next pitch type from game context, and turning it into a 
 | [docs/data_dictionary.md](docs/data_dictionary.md) | Every Statcast field: meaning, missing rate, and whether it's known before the pitch (the leakage guard) |
 | [docs/cleaning_log.md](docs/cleaning_log.md) | Row counts after every cleaning step, completeness against the MLB schedule, data checks |
 | [docs/baseline_results.md](docs/baseline_results.md) | The shrunken pitch-mix baseline every model has to beat |
+| [docs/mix_results.md](docs/mix_results.md) | Pitcher-mix layers: prior, current form, platoon tilt, relabel repair, mix-change flag |
+| [docs/logistic_results.md](docs/logistic_results.md) | The multinomial logistic context model vs. every baseline |
 | [docs/decisions.md](docs/decisions.md) | Every choice and the reason for it |
 
 ## Reproduce
@@ -19,15 +21,15 @@ Requires R 4.5 (Rtools not needed; all packages install as binaries on Windows).
 
 ```r
 renv::restore()            # exact package versions from renv.lock
-source("run_all.R")        # pull -> clean -> dictionary -> baseline -> tests
+source("run_all.R")        # pull -> clean -> baseline -> mixes -> features -> model -> tests
 ```
 
-The first pull downloads about 3M pitches (2023-2026 regular seasons) from Baseball Savant one game day at a time and takes a while; later runs skip days already on disk. Data files live in `data/` and are not committed.
+The first pull downloads about 3.6M pitches (2022-2026 regular seasons; 2022 is history only) from Baseball Savant one game day at a time and takes a while; later runs skip days already on disk. Data files live in `data/` and are not committed.
 
 ## Layout
 
 ```
-R/           shared functions (pull, clean, baseline, players, schedule)
+R/           shared functions (pull, clean, baseline, mixes, features, models)
 pipeline/    numbered steps, each reading only what the previous one wrote
 docs/        dictionary, cleaning log, results, decisions
 models/      saved model settings and metadata

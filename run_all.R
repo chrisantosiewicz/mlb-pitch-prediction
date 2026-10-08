@@ -7,7 +7,10 @@ steps <- c(
   "pipeline/01_pull.R",        # Savant -> data/raw/        (skips days already pulled)
   "pipeline/02_clean.R",       # data/raw -> data/clean/   + docs/cleaning_log.md
   "pipeline/03_dictionary.R",  # docs/data_dictionary.md
-  "pipeline/04_baseline.R"     # models/baseline.json      + docs/baseline_results.md
+  "pipeline/04_baseline.R",    # models/baseline.json      + docs/baseline_results.md
+  "pipeline/05_mixes.R",       # pitcher-mix layers        + docs/mix_results.md
+  "pipeline/06_features.R",    # data/features/features_<season>.parquet
+  "pipeline/07_logistic.R"     # models/logistic_*.rds     + docs/logistic_results.md
 )
 
 for (step in steps) {

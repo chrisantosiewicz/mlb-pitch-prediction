@@ -10,6 +10,7 @@ RAW_DIR <- "data/raw"
 # Regular-season windows are padded on both sides; spring training and
 # postseason rows are removed in cleaning using game_type, not by date.
 SEASON_WINDOWS <- list(
+  "2022" = c("2022-04-05", "2022-10-06"),   # history only: priors for 2023 pitches
   "2023" = c("2023-03-25", "2023-10-03"),
   "2024" = c("2024-03-18", "2024-10-01"),
   "2025" = c("2025-03-16", "2025-09-30"),

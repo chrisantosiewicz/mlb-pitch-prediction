@@ -29,3 +29,18 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | Baseline: shrunken prior-season mix, kappa and recency decay tuned on 2025 | The model has to beat the strongest version of "just use his mix", not a strawman. Tuning the baseline gets the same care as tuning the models. |
 | 2026 is not scored in Phase 1 | The test season is looked at once, in Phase 3, for the baseline and models together. |
 | Completeness check against the MLB schedule | Every completed game on the schedule must appear in the data. The same check guards the daily refresh in Phase 6. |
+
+## Phase 2 choices
+
+| Choice | Why |
+|---|---|
+| Pull 2022 as history only | So 2023 training pitches have a prior season to build the pitcher's mix from, like every later season. 2022 is never trained on or scored. |
+| Season-to-date mix as a second baseline (Chris approved 2026-10-08) | Mixes drift during a season. Updating each pitcher's mix with his games so far, through his previous game, is leakage-safe and is what an advance scout looks at. It also stops the context model from getting credit for catching mix changes. |
+| Platoon tilt vs. batter hand in the mix | A pitcher's sweeper usage against same-side hitters is part of who he is, not context the model should have to rediscover. |
+| Relabel repair using pitch physics (Chris's idea) | Savant relabels (slider to sweeper, four-seam to sinker) made the worst baseline misses. If a pitch vanishes and a new one with the same velocity and movement appears, his history of the old label is credited to the new one. Only earlier games are used. |
+| Mix-change flag needs an established history and a 20%+ shift | With hundreds of pitches almost any drift is statistically significant, and pitchers with little history are compared mostly against the league mix. The flag should mean "this pitcher changed", not "we don't know him yet". |
+| Pitch families: fastball (FF, SI, FC), breaking (SL, ST, CU), offspeed (CH, FS) | Relabels almost always stay inside a family, so family tendencies are the stable fallback Chris asked for. Cutters follow Savant's fastball convention. |
+| His mix enters the logistic model as a fixed offset | The model starts from what he throws and only learns how situations shift him. That keeps coefficients league-wide and readable ("0-2 counts tilt toward breaking balls by X") and means a pitch he has never thrown gets almost no probability without hard masking. |
+| Ridge (L2) penalty, tuned on 2025 | Many correlated dummy variables (count x hand, previous pitch x result). Ridge keeps all of them but shrinks noisy ones; the penalty is chosen on the tuning season, never on 2026. |
+| Previous pitch result as a feature | Whether the last pitch was a whiff, foul, called strike or ball is known before the next pitch and is exactly what drives "go back to it" sequencing. |
+| Two versions: all 8 pitches, and family-then-pitch | Tests Chris's question directly: does the situation mainly decide fastball vs. breaking vs. offspeed, with the specific pitch coming from his mix? |

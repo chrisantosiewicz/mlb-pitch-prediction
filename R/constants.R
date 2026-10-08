@@ -1,7 +1,19 @@
 # constants.R -----------------------------------------------------------------
 # Shared definitions used by every pipeline step, the app and the reports.
 
-SEASONS <- 2023:2026
+# 2022 is pulled and cleaned only so 2023 pitches have a prior season to build
+# pitcher mixes from. It is never trained on or scored.
+SEASONS <- 2022:2026
+MODEL_SEASONS <- 2023:2026
+
+# Pitch families. Savant relabels almost always stay inside a family
+# (slider <-> sweeper, changeup <-> splitter), so family tendencies are more
+# stable than specific labels. Cutters follow Savant's fastball convention.
+PITCH_FAMILY <- c(FF = "FB", SI = "FB", FC = "FB",
+                  SL = "BR", ST = "BR", CU = "BR",
+                  CH = "OS", FS = "OS")
+PITCH_FAMILIES <- c("FB", "BR", "OS")
+PITCH_FAMILY_NAMES <- c(FB = "Fastball", BR = "Breaking", OS = "Offspeed")
 
 # The ~8 Savant-style pitch groups the model predicts (decision 4A).
 # Anything not listed here stays in the clean table, so it still counts as

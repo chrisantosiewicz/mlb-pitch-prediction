@@ -1,0 +1,48 @@
+{
+  "model": "multinomial logistic (ridge) with pitcher-mix offset",
+  "offset_layer": "L3",
+  "formula": "~count_str * same_hand + prev1_group * prev1_result + prev2_group +     base_state + outs + inning_bkt + score_bkt + tto + pitch_count_bkt +     is_starter + gtd_fb_share + gtd_br_share + gtd_any + mix_changed +     relabeled",
+  "n_features": 121,
+  "train": [2023, 2024],
+  "tuned_on": 2025,
+  "lambda_pitch": 0.0001,
+  "lambda_family": 0.00003,
+  "tune_scores": [
+    {
+      "model": "L1 prior mix (Phase 1 baseline, relabel-repaired)",
+      "log_loss": 1.557686,
+      "top1": 0.391948,
+      "family_log_loss": 0.913989,
+      "family_top1": 0.558052
+    },
+    {
+      "model": "L2 + current form (proposed second baseline)",
+      "log_loss": 1.367617,
+      "top1": 0.410938,
+      "family_log_loss": 0.884622,
+      "family_top1": 0.565837
+    },
+    {
+      "model": "L3 + platoon tilt",
+      "log_loss": 1.343917,
+      "top1": 0.419862,
+      "family_log_loss": 0.871328,
+      "family_top1": 0.566192
+    },
+    {
+      "model": "Context model: family, then pitch from his mix",
+      "log_loss": 1.302788,
+      "top1": 0.440485,
+      "family_log_loss": 0.830199,
+      "family_top1": 0.582585
+    },
+    {
+      "model": "Context model: all 8 pitches",
+      "log_loss": 1.278903,
+      "top1": 0.449278,
+      "family_log_loss": 0.831187,
+      "family_top1": 0.582124
+    }
+  ],
+  "created": "2026-10-08 12:00:52.660111"
+}

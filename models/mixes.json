@@ -1,0 +1,22 @@
+{
+  "decay": 0.25,
+  "kappa": 100,
+  "tau_std": 10,
+  "tau_hand": 400,
+  "relabel": true,
+  "mix_change": {
+    "min_pitches": 50,
+    "p_value": 0.001,
+    "min_tvd": 0.2
+  },
+  "relabel_rules": {
+    "min_hist_share": 0.05,
+    "max_new_hist_share": 0.02,
+    "min_std_pitches": 30,
+    "min_new_share": 0.05,
+    "max_velo_diff_mph": 2,
+    "max_move_diff_in": 4
+  },
+  "tuned_on": 2025,
+  "created": "2026-10-08 11:57:26.849972"
+}
