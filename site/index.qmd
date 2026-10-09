@@ -36,6 +36,7 @@ The model earns its keep where pitchers move furthest from their usual mix: hitt
 
 ## Explore
 
+- [**Live matchup app**](https://chrisantosiewicz.shinyapps.io/mlb-matchup-report/): pick any pitcher and batter, set the situation, download the PDF
 - [**Sample advance report**](report.qmd): Paul Skenes vs. Shohei Ohtani, as a printable one-page PDF
 - [**Methods in plain language**](methods.qmd): every modeling choice and why
 - [**Full results**](results.qmd): calibration, per-pitcher results, where it fails

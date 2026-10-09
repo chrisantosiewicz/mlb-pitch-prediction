@@ -18,4 +18,4 @@ subtitle: "Paul Skenes vs. Shohei Ohtani"
 
 ## The app
 
-The same report is a Shiny app where you can pick any pitcher and batter, set the situation and download the PDF. Every panel in the app and the PDF comes from the same R functions, so they always agree.
+The same report is a [live Shiny app](https://chrisantosiewicz.shinyapps.io/mlb-matchup-report/) where you can pick any pitcher and batter, set the situation and download the PDF. Every panel in the app and the PDF comes from the same R functions, so they always agree.

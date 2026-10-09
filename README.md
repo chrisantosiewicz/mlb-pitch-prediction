@@ -4,6 +4,8 @@ Predicting a pitcher's next pitch type from game context, and turning it into a 
 
 **Status:** Phases 1-5 built: data, models, 2026 test, Shiny app, PDF report and website. See [docs/phase3_summary.md](docs/phase3_summary.md) for results and [PLAN.md](PLAN.md) for the roadmap.
 
+**Live app:** https://chrisantosiewicz.shinyapps.io/mlb-matchup-report/
+
 **Sample advance report:** [reports/sample_skenes_ohtani.pdf](reports/sample_skenes_ohtani.pdf)
 
 ## What's here so far

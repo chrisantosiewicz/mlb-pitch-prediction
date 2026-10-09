@@ -21,6 +21,8 @@ website:
       - href: report.qmd
         text: Sample report
     right:
+      - text: Live app
+        href: https://chrisantosiewicz.shinyapps.io/mlb-matchup-report/
       - icon: github
         href: https://github.com/chrisantosiewicz/mlb-pitch-prediction
         aria-label: GitHub

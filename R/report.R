@@ -6,6 +6,8 @@
 PITCH_COLORS <- c(FF = "#D22D49", SI = "#FE9D00", FC = "#933F2C", SL = "#C9C21B",
                   ST = "#DDB33A", CU = "#00A8C5", CH = "#1DBE3A", FS = "#3BACAC")
 FAMILY_COLORS <- c(FB = "#D22D49", BR = "#00A8C5", OS = "#1DBE3A")
+PITCH_SHORT_NAMES <- c(FF = "4-Seam", SI = "Sinker", FC = "Cutter", SL = "Slider", ST = "Sweeper",
+                       CU = "Curve", CH = "Change", FS = "Split")
 PLATE_HALF_WIDTH <- 17 / 2 / 12   # ft
 MIN_USAGE_SHOWN <- 0.02           # pitch types under 2% usage are hidden
 
@@ -78,7 +80,7 @@ count_mix_table <- function(d, pitcher_id, stand, family = FALSE) {
 
 plot_count_mix <- function(d, pitcher_id, stand, family = FALSE, text_size = 3.2) {
   df <- count_mix_table(d, pitcher_id, stand, family)
-  labels <- if (family) PITCH_FAMILY_NAMES else PITCH_GROUP_NAMES
+  labels <- if (family) PITCH_FAMILY_NAMES else PITCH_SHORT_NAMES
   totals <- dplyr::distinct(df, count_str, total)
   ggplot2::ggplot(df, ggplot2::aes(pitch_group, count_str, fill = share)) +
     ggplot2::geom_tile(colour = "white", linewidth = 0.6) +
