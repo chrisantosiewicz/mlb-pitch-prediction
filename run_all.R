@@ -14,7 +14,8 @@ steps <- c(
   "pipeline/08_batter.R",      # batter layer              + models/batter.json
   "pipeline/09_tune_models.R", # batter layer check, xgboost rounds -> models/tuning.json
   "pipeline/10_test_2026.R",   # one-time 2026 test        + docs/test_results.md
-  "pipeline/11_app_data.R"     # app/data tables + app bundle (then: shiny::runApp("app"))
+  "pipeline/11_app_data.R",    # app/data tables + app bundle (then: shiny::runApp("app"))
+  "pipeline/12_sample_report.R" # sample PDF + PNG for the website (then: quarto render site)
 )
 
 for (step in steps) {

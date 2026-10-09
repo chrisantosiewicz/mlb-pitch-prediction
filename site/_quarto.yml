@@ -1,0 +1,36 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - files/
+
+website:
+  title: "MLB Next-Pitch Model"
+  site-url: "https://chrisantosiewicz.github.io/mlb-pitch-prediction/"
+  description: "A next-pitch prediction model and pitcher-vs-batter advance report built on 2023-2026 Statcast."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: data.qmd
+        text: Data
+      - href: methods.qmd
+        text: Methods
+      - href: results.qmd
+        text: Results
+      - href: report.qmd
+        text: Sample report
+    right:
+      - icon: github
+        href: https://github.com/chrisantosiewicz/mlb-pitch-prediction
+        aria-label: GitHub
+  page-footer:
+    center: "Chris Antosiewicz · Statcast data from Baseball Savant · Non-commercial portfolio project"
+
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-depth: 2
+    smooth-scroll: true
+    fig-align: center

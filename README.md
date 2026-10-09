@@ -2,7 +2,9 @@
 
 Predicting a pitcher's next pitch type from game context, and turning it into a one-page pitcher-vs-batter advance report.
 
-**Status:** Phase 4 (Shiny matchup app) built and in review. Results so far: [docs/phase3_summary.md](docs/phase3_summary.md). Roadmap: [PLAN.md](PLAN.md).
+**Status:** Phases 1-5 built: data, models, 2026 test, Shiny app, PDF report and website. See [docs/phase3_summary.md](docs/phase3_summary.md) for results and [PLAN.md](PLAN.md) for the roadmap.
+
+**Sample advance report:** [reports/sample_skenes_ohtani.pdf](reports/sample_skenes_ohtani.pdf)
 
 ## What's here so far
 

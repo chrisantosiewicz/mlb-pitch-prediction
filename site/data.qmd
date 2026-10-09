@@ -1,0 +1,42 @@
+---
+title: "Data and cleaning"
+---
+
+## Source
+
+Pitch-level Statcast data from [Baseball Savant](https://baseballsavant.mlb.com), pulled with the [baseballr](https://billpetti.github.io/baseballr/) package one game day at a time. A full day is about 4,500 pitches, well under Savant's per-request limit, so no day is ever silently truncated. Player names and positions, and the schedule used for the completeness check, come from the MLB Stats API.
+
+| Season | Role | Regular-season pitches after cleaning |
+|---|---|---|
+| 2022 | History only (priors for 2023) | 708,279 |
+| 2023 | Training | 718,871 |
+| 2024 | Training | 710,537 |
+| 2025 | Tuning | 710,341 |
+| 2026 | Test (scored once) | 714,625 |
+
+Every completed regular-season game on the MLB schedule, 12,148 games across 2022-2026, is present in the data.
+
+## Cleaning steps
+
+Each step is a SQL view in DuckDB with a row count logged after it ([full cleaning log](https://github.com/chrisantosiewicz/mlb-pitch-prediction/blob/main/docs/cleaning_log.md)).
+
+1. **Regular season only.** Spring training, exhibitions and the postseason are dropped using Savant's `game_type`.
+2. **Duplicates removed.** If a day is re-pulled (Savant revises recent data), the newest copy of each pitch wins.
+3. **Impossible rows removed.** Missing pitcher or batter, or a count or out total that can't happen. None were found.
+4. **Position players pitching removed** (about 9,500 pitches), using primary position from the MLB Stats API rather than a velocity guess. Two-way players like Ohtani are kept.
+5. **Eight pitch groups.** Four-seam, sinker, cutter, slider, sweeper, curveball (curve, knuckle curve, slurve, slow curve), changeup and splitter (splitter, forkball).
+
+Pitches outside those groups (automatic balls from pitch-clock violations, pitchouts, knuckleballs, eephus pitches) stay in the table so they still count as "the previous pitch" for the next one, but they're never prediction targets.
+
+## The leakage guard
+
+The [data dictionary](https://github.com/chrisantosiewicz/mlb-pitch-prediction/blob/main/docs/data_dictionary.md) documents all 120 Savant fields and 15 derived ones. Each is tagged with **when it becomes known**:
+
+- **Before the pitch**: count, runners, outs, score, handedness, times through the order. Only these can be model inputs.
+- **After the pitch**: velocity, spin, location, result. Used in the report, never as an input for the same pitch.
+- **Future**: Savant includes `pitcher_days_until_next_game`, which is only knowable in hindsight. It's tagged and never used.
+
+## Known data issues
+
+- **Savant relabels pitches.** Some pitchers' sliders became sweepers, or four-seamers became sinkers, between seasons. That's a label change, not a new pitch. The pipeline detects and repairs clean relabels by matching velocity and movement, but only partly. 19 pitcher-seasons flipped their slider/sweeper split by 50+ points.
+- **Times through the order** comes from Savant's `n_thruorder_pitcher`. It agrees with a version derived from the pitcher's own batter count 99.8% of the time.

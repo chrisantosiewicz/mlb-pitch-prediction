@@ -66,3 +66,11 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | Location shown as density maps, not a model | Public data shows where the ball ended up, not the catcher's target. The maps say so, and blend intent with misses (Chris's concern, 2026-10-08). |
 | xwOBA by pitch type shrunk toward league (60 PA) on 2025-26 | One season of PAs ending on a given pitch type is thin; shrinkage stops a 12-PA sample from showing .700. |
 | Pitch mix and locations from 2026 only | The report should describe the pitcher as he is now. |
+
+## Phase 5 choices
+
+| Choice | Why |
+|---|---|
+| PDF built with ggplot2 + patchwork, not Quarto | The app's Download button has to work on shinyapps.io, which has no Quarto or LaTeX. One R function builds the page for both the app and the sample report, so they can't drift apart. |
+| Website as static Quarto pages | The write-up quotes the committed results; it doesn't re-run models when the site is rebuilt, so the published numbers always match the one-time 2026 test. |
+| Website hosted on GitHub Pages from a gh-pages branch | `docs/` already holds the project documentation, so the rendered site lives on its own branch. |

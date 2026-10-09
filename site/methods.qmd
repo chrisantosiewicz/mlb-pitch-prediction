@@ -1,0 +1,48 @@
+---
+title: "Methods, in plain language"
+---
+
+## The question
+
+For each pitch, give a probability for each of eight pitch types using only what was known before the pitch: who's pitching and batting, the count, the previous pitches and what happened on them, runners, outs, score, inning, times through the order and pitch count.
+
+## Step 1: Know the pitcher
+
+Most of a pitch's predictability is the pitcher himself. The model starts from his **pitch mix**, built in three layers:
+
+1. **Prior mix.** His pitches from earlier seasons, with last season counting most (two seasons back counts a quarter as much). It's **shrunk toward the league mix** for pitchers with the same throwing hand and role: each pitcher starts with 100 pitches' worth of league average. With 3,000 pitches of history that barely matters. With 30 it decides almost everything. This is empirical Bayes, and it stops the model from saying "0% curveball" because a rookie hasn't thrown one yet.
+2. **Current form.** The prior mix updated with his pitches this season, *through his previous game only*. Pitch mixes change a lot from year to year, and a pitcher's first few outings already show how.
+3. **Platoon tilt.** His usual split against left- vs. right-handed hitters.
+
+Before the prior mix is built, **Savant relabels are repaired**: if a pitch he used to throw has vanished this season while a new one with the same velocity and movement has appeared, his history of the old label is credited to the new one.
+
+## Step 2: Know the situation
+
+Two models take his mix as their starting point and learn how the situation moves him away from it.
+
+- **Multinomial logistic regression.** One equation per pitch type turns the situation into a probability for each pitch. His mix enters as a fixed offset, so the model never relearns who throws what. Its coefficients are league-wide answers like "with two strikes, pitchers go to their breaking ball more often than usual." A ridge penalty keeps the many dummy variables (count × handedness, previous pitch × its result) from overfitting.
+- **Gradient boosting (xgboost).** Trees fitted with the same starting point, so they can find interactions without anyone writing them by hand. For example: two strikes, a same-handed hitter, and a slider that just got a whiff.
+
+A **batter layer** adds how pitchers have attacked *this* hitter compared with what their own mixes predicted, using earlier games only and shrunk toward zero for hitters with little history.
+
+## Step 3: Test honestly
+
+- **Time split.** Train on 2023-24, tune every setting on 2025, then refit on 2023-25 and score 2026 once.
+- **Pre-registration.** The models, metrics and decision rules for 2026 were committed to the repo before 2026 was scored.
+- **Metrics.** *Log loss* is the headline because it rewards honest probabilities and heavily punishes confident misses. *Top-1 accuracy* is easier to explain but flatters pitchers who throw one pitch 60% of the time, so it's always shown next to the baseline. *Calibration plots* check that "40%" means 40%.
+- **Uncertainty.** 95% intervals come from 500 bootstrap resamples of whole games, because pitches within a game aren't independent.
+
+## Leakage risks and guards
+
+| Risk | Guard |
+|---|---|
+| Using what's measured on the pitch (velocity, location, result) as an input | Every field tagged by when it's known; inputs whitelisted |
+| Pitcher mix built from the season being predicted | Earlier seasons plus this season through his previous game only |
+| Random train/test split | Time split; test season scored once |
+| Tuning on the test season | Separate 2025 tuning season |
+| Previous-pitch features crossing at-bats or out of order | Built with ordered window functions within each at-bat; unit-tested |
+| A pitch type relabeled by Savant | Detected with pitch physics; discussed as a limitation |
+
+## What the model can't know
+
+It predicts pitch **type**, not location, and location is half of a pitcher's decision. Public data shows where the ball ended up, not where the catcher set up, so the report shows location as density maps that blend intent with missed spots. The model doesn't see the catcher, the game plan or the scouting report on the hitter. Expect real but modest gains over a pitcher's own mix: pitchers are paid to be unpredictable.

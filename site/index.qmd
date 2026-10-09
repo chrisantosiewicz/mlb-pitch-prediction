@@ -1,0 +1,42 @@
+---
+title: "Predicting the next pitch"
+subtitle: "A next-pitch model for MLB pitchers, and the one-page advance report that uses it"
+toc: false
+---
+
+Given the count, the previous pitches, who's batting and the game situation, what does this pitcher throw next? I built a model that answers that with honest probabilities, tested it once on a season it had never seen, and turned it into the kind of pitcher-vs-batter advance report a coaching staff could use.
+
+::: {.callout-note appearance="simple"}
+**Built with:** R (DuckDB, glmnet, xgboost, Shiny, ggplot2, Quarto) on 3.6 million pitches of 2022-2026 Statcast data. All code, the data dictionary, the cleaning log and every modeling decision are on [GitHub](https://github.com/chrisantosiewicz/mlb-pitch-prediction).
+:::
+
+## The result
+
+Scored once on the 2026 season, after every setting was fixed on 2025:
+
+| Model | Log loss (lower is better) | Top-1 accuracy | Fastball / breaking / offspeed |
+|---|---|---|---|
+| The pitcher's prior-season mix (baseline) | 1.580 | 37.2% | 56.2% |
+| His mix, updated with this season's form and platoon split | 1.390 | 40.1% | 56.8% |
+| Multinomial logistic regression (adds count, sequence, situation) | 1.327 | 43.3% | 58.4% |
+| **Gradient boosting (xgboost)** | **1.283** | **44.7%** | **59.7%** |
+
+Every step in the table is a real improvement: the 95% bootstrap interval for each difference, resampling whole games, excludes zero. The model beats the baseline for all 468 pitchers who threw 500+ pitches in 2026, and it's well calibrated: when it says 40% slider, sliders come about 40% of the time.
+
+## What makes it credible
+
+- **A hard baseline.** Every model has to beat the pitcher's own pitch mix, shrunk toward similar pitchers for thin samples, not a league-average strawman.
+- **A time split.** Train on 2023-24, tune on 2025, test once on 2026. Never a random split, because the model's job is predicting the future.
+- **A pre-registered test.** The 2026 test plan, including the rule for which model the app uses, was [committed to the repo](https://github.com/chrisantosiewicz/mlb-pitch-prediction/blob/main/docs/preregistration.md) before 2026 was scored. One idea I liked (a family-first model for relabeled pitches) looked good on 2025, failed on 2026, and was dropped.
+- **Leakage guards.** Every field is tagged by *when it becomes known*. Pitcher mixes use only games before the one being predicted.
+
+## Where it helps most
+
+The model earns its keep where pitchers move furthest from their usual mix: hitter's counts (3-0, 3-1, 2-0) and two-strike counts (0-2, 1-2). In the 2025 tuning season, after a swing-and-miss, pitchers threw the same pitch again 49% of the time, against 32% if you only knew their mix. The logistic model predicted 50%.
+
+## Explore
+
+- [**Sample advance report**](report.qmd): Paul Skenes vs. Shohei Ohtani, as a printable one-page PDF
+- [**Methods in plain language**](methods.qmd): every modeling choice and why
+- [**Full results**](results.qmd): calibration, per-pitcher results, where it fails
+- [**Data and cleaning**](data.qmd): sources, every cleaning step, the data dictionary
