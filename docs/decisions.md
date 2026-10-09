@@ -74,3 +74,4 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | PDF built with ggplot2 + patchwork, not Quarto | The app's Download button has to work on shinyapps.io, which has no Quarto or LaTeX. One R function builds the page for both the app and the sample report, so they can't drift apart. |
 | Website as static Quarto pages | The write-up quotes the committed results; it doesn't re-run models when the site is rebuilt, so the published numbers always match the one-time 2026 test. |
 | Website hosted on GitHub Pages from a gh-pages branch | `docs/` already holds the project documentation, so the rendered site lives on its own branch. |
+| Savant-inspired app styling (Chris, 2026-10-09) | Navy and red, condensed headings, Savant-style percentile sliders (red = better for that player) and pitch-color dots. Familiar to anyone in a front office. No MLB logos or player photos, to keep it clearly an independent project. |

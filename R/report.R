@@ -325,3 +325,63 @@ family_summary <- function(pred) {
     dplyr::transmute(Family = PITCH_FAMILY_NAMES[as.character(family)], `This situation` = pct(model),
                      `His usual mix` = pct(usual))
 }
+
+# ---- percentile rankings (Savant-style) ----
+
+PERCENTILE_MIN_PA <- 150
+
+# Each metric: label, how to format it, and whether higher is better for
+# that player (so the 100th percentile is always "good", shown in red).
+percentile_rankings <- function(d) {
+  pooled <- d$outcomes |>
+    dplyr::filter(pitch_group == "ALL") |>
+    dplyr::mutate(xwoba_sum = dplyr::coalesce(xwoba * pa, 0)) |>
+    dplyr::group_by(side, player_id) |>
+    dplyr::summarise(xwoba = sum(xwoba_sum) / sum(pa), k_rate = sum(k) / sum(pa),
+                     bb_rate = sum(bb) / sum(pa), whiff_rate = sum(whiffs) / sum(swings),
+                     pa = sum(pa), .groups = "drop") |>
+    dplyr::filter(pa >= PERCENTILE_MIN_PA)
+  arsenal <- d$arsenal |>
+    dplyr::group_by(pitcher) |>
+    dplyr::summarise(chase_rate = sum(chases) / sum(out_zone),
+                     fb_velo = suppressWarnings(max(stats::weighted.mean(velo[pitch_group == "FF"], n[pitch_group == "FF"]),
+                                   stats::weighted.mean(velo[pitch_group == "SI"], n[pitch_group == "SI"]),
+                                   na.rm = TRUE)),
+                     .groups = "drop") |>
+    dplyr::mutate(fb_velo = ifelse(is.finite(fb_velo), fb_velo, NA_real_))
+
+  rank_metric <- function(df, col, label, higher_better, fmt) {
+    v <- df[[col]]
+    pctl <- dplyr::percent_rank(if (higher_better) v else -v)
+    tibble::tibble(player_id = df$player_id, metric = label, value = fmt(v),
+                   pctl = round(100 * pctl))
+  }
+  pitchers <- dplyr::filter(pooled, side == "pitcher") |>
+    dplyr::left_join(dplyr::rename(arsenal, player_id = pitcher), by = "player_id")
+  batters <- dplyr::filter(pooled, side == "batter")
+  list(
+    pitcher = dplyr::bind_rows(
+      rank_metric(pitchers, "xwoba", "xwOBA", FALSE, woba_fmt),
+      rank_metric(pitchers, "fb_velo", "Fastball velo", TRUE, function(x) sprintf("%.1f", x)),
+      rank_metric(pitchers, "k_rate", "K%", TRUE, function(x) pct(x, 1)),
+      rank_metric(pitchers, "bb_rate", "BB%", FALSE, function(x) pct(x, 1)),
+      rank_metric(pitchers, "whiff_rate", "Whiff%", TRUE, function(x) pct(x, 1)),
+      rank_metric(pitchers, "chase_rate", "Chase%", TRUE, function(x) pct(x, 1))),
+    batter = dplyr::bind_rows(
+      rank_metric(batters, "xwoba", "xwOBA", TRUE, woba_fmt),
+      rank_metric(batters, "k_rate", "K%", FALSE, function(x) pct(x, 1)),
+      rank_metric(batters, "bb_rate", "BB%", TRUE, function(x) pct(x, 1)),
+      rank_metric(batters, "whiff_rate", "Whiff%", FALSE, function(x) pct(x, 1)))
+  )
+}
+
+# Savant's scale: blue (poor) through grey to red (great).
+percentile_color <- function(p) {
+  ramp <- grDevices::colorRamp(c("#3661ad", "#b4b4b4", "#d82129"))
+  rgb <- ramp(pmin(pmax(p, 0), 100) / 100)
+  grDevices::rgb(rgb[, 1], rgb[, 2], rgb[, 3], maxColorValue = 255)
+}
+
+pitch_dot <- function(group) {
+  sprintf('<span class="pitch-dot" style="background:%s"></span>%s', PITCH_COLORS[group], PITCH_GROUP_NAMES[group])
+}

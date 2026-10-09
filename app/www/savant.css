@@ -1,0 +1,83 @@
+/* Baseball Savant-inspired styling: navy and red, condensed headings,
+   percentile sliders, pitch-color dots, quiet tables. */
+
+:root {
+  --navy: #0b2545;
+  --navy-2: #13315c;
+  --red: #c8102e;
+  --ink: #1d2733;
+  --muted: #6b7785;
+  --rule: #dfe4ea;
+  --panel: #f6f8fa;
+}
+
+body { color: var(--ink); background: #eef1f4; }
+
+.navbar, .bslib-page-title, .navbar.navbar-static-top {
+  background: var(--navy) !important;
+  border-bottom: 4px solid var(--red);
+}
+.bslib-page-title, .navbar-brand {
+  font-family: "Roboto Condensed", sans-serif;
+  font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #fff !important;
+}
+.bslib-sidebar-layout > .sidebar { background: #fff; border-right: 1px solid var(--rule); }
+.sidebar h6, .sidebar .control-label { font-family: "Roboto Condensed", sans-serif; }
+.sidebar h6 {
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--navy); font-weight: 700;
+  font-size: 0.8rem; margin-top: 0.4rem;
+}
+.sidebar .control-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* cards */
+.card { border: 1px solid var(--rule); border-radius: 4px; box-shadow: none; }
+.card-header {
+  background: #fff; border-bottom: 2px solid var(--navy);
+  font-family: "Roboto Condensed", sans-serif; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--navy); font-size: 0.85rem; padding: 0.55rem 0.9rem;
+}
+.card-footer { background: var(--panel); color: var(--muted); font-size: 0.78rem; }
+
+/* matchup header */
+.matchup-header { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; margin-bottom: 1rem; }
+@media (max-width: 991px) { .matchup-header { grid-template-columns: 1fr; } }
+.player-card { background: #fff; border: 1px solid var(--rule); border-top: 4px solid var(--navy); border-radius: 4px; padding: 0.9rem 1.1rem; }
+.player-card.batter { border-top-color: var(--red); }
+.player-role { font-family: "Roboto Condensed", sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.player-name { font-family: "Roboto Condensed", sans-serif; font-weight: 700; font-size: 1.9rem; line-height: 1.1; color: var(--navy); margin: 0.1rem 0; }
+.player-meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.6rem; }
+.flag-badge { display: inline-block; background: #fff4d6; color: #7a5200; border: 1px solid #f0d58a; border-radius: 3px; font-size: 0.72rem; padding: 0.1rem 0.45rem; margin-right: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.vs-card { align-self: center; text-align: center; background: var(--navy); color: #fff; border-radius: 4px; padding: 0.9rem 1.2rem; min-width: 210px; }
+.vs-card .vs { font-family: "Roboto Condensed", sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.1em; }
+.vs-card .h2h-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; margin-top: 0.3rem; }
+.vs-card .h2h-line { font-size: 0.85rem; }
+
+/* percentile sliders */
+.pctl-title { font-family: "Roboto Condensed", sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0.2rem 0 0.35rem; }
+.pctl-row { display: grid; grid-template-columns: 92px 1fr 52px; align-items: center; gap: 0.6rem; margin: 0.32rem 0; }
+.pctl-label { font-size: 0.8rem; font-weight: 600; text-align: right; }
+.pctl-track { position: relative; height: 6px; background: #e3e7ec; border-radius: 3px; }
+.pctl-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; opacity: 0.55; }
+.pctl-dot {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff;
+  color: #fff; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.pctl-value { font-size: 0.8rem; color: var(--muted); }
+.pctl-note { font-size: 0.7rem; color: var(--muted); margin-top: 0.3rem; }
+
+/* tables */
+.table { font-size: 0.82rem; margin-bottom: 0; }
+.table thead th {
+  font-family: "Roboto Condensed", sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: 0.72rem; color: var(--muted); border-bottom: 2px solid var(--rule) !important; background: #fff;
+}
+.table td { border-color: var(--rule); }
+.pitch-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+.btn-primary { background: var(--red); border-color: var(--red); font-family: "Roboto Condensed", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
+.btn-primary:hover { background: #a30d26; border-color: #a30d26; }
+
+.app-footer { color: var(--muted); font-size: 0.75rem; padding: 0.6rem 0.2rem 1.2rem; }
