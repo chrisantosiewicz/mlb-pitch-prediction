@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(ggplot2)
 })
-for (f in c("constants", "features", "boost_model", "report")) source(file.path("lib", paste0(f, ".R")))
+for (f in c("constants", "features", "boost_model", "report", "report_pdf")) source(file.path("lib", paste0(f, ".R")))
 
 d <- load_report_data("data")
 model <- xgboost::xgb.load("models/final_xgboost.ubj")
@@ -63,7 +63,9 @@ ui <- page_sidebar(
     checkboxInput("starter", "Pitcher started this game", TRUE),
     hr(),
     selectInput("bucket", "Location maps: counts", names(COUNT_BUCKETS)),
-    checkboxInput("family", "Show pitch mix as fastball / breaking / offspeed", FALSE)
+    checkboxInput("family", "Show pitch mix as fastball / breaking / offspeed", FALSE),
+    hr(),
+    downloadButton("pdf", "Download PDF advance report", class = "btn-primary w-100")
   ),
   uiOutput("header"),
   layout_columns(
@@ -72,6 +74,7 @@ ui <- page_sidebar(
          tableOutput("family_table"), card_footer(textOutput("pred_note"))),
     card(card_header("Pitch mix by count"), plotOutput("count_mix", height = 400))
   ),
+  card(card_header("Model by count (earlier pitches unknown)"), tableOutput("key_counts")),
   card(card_header("Where his pitches go"), plotOutput("locations", height = 300)),
   layout_columns(
     col_widths = c(6, 6),
@@ -153,6 +156,19 @@ server <- function(input, output, session) {
   output$xwoba <- renderPlot(plot_xwoba_by_pitch(d, ids()$p, ids()$b), res = 96)
   output$arsenal <- renderTable(arsenal_table(d, ids()$p, mu()$stand), striped = TRUE, width = "100%")
   output$platoon <- renderTable(platoon_table(d, ids()$p, ids()$b), striped = TRUE, width = "100%")
+  output$key_counts <- renderTable(key_count_table(d, model, ids()$p, ids()$b, situation()),
+                                   striped = TRUE, width = "100%")
+  output$pdf <- downloadHandler(
+    filename = function() {
+      m <- mu()
+      clean <- function(x) gsub("[^A-Za-z]+", "_", x)
+      sprintf("advance_report_%s_vs_%s.pdf", clean(m$pitcher$full_name), clean(m$batter$full_name))
+    },
+    content = function(file) {
+      withProgress(message = "Building PDF", value = 0.5,
+                   render_report_pdf(d, model, ids()$p, ids()$b, file, situation()))
+    }
+  )
   output$footer <- renderText(sprintf(
     "Statcast data through %s. Pitch mix and locations: %s regular season. xwOBA: %s. Next-pitch model trained on 2023-2025 and tested once on 2026.",
     d$meta$data_through, d$meta$report_season, paste(range(unlist(d$meta$outcome_seasons)), collapse = "-")))

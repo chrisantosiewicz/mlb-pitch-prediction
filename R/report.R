@@ -76,15 +76,15 @@ count_mix_table <- function(d, pitcher_id, stand, family = FALSE) {
                   pitch_group = factor(pitch_group, levels = levels_used))
 }
 
-plot_count_mix <- function(d, pitcher_id, stand, family = FALSE) {
+plot_count_mix <- function(d, pitcher_id, stand, family = FALSE, text_size = 3.2) {
   df <- count_mix_table(d, pitcher_id, stand, family)
   labels <- if (family) PITCH_FAMILY_NAMES else PITCH_GROUP_NAMES
   totals <- dplyr::distinct(df, count_str, total)
   ggplot2::ggplot(df, ggplot2::aes(pitch_group, count_str, fill = share)) +
     ggplot2::geom_tile(colour = "white", linewidth = 0.6) +
-    ggplot2::geom_text(ggplot2::aes(label = ifelse(is.na(share) | share < 0.005, "", pct(share))), size = 3.2) +
+    ggplot2::geom_text(ggplot2::aes(label = ifelse(is.na(share) | share < 0.005, "", pct(share))), size = text_size) +
     ggplot2::geom_text(data = totals, ggplot2::aes(x = length(levels(df$pitch_group)) + 0.75, y = count_str,
-                                                   label = total), inherit.aes = FALSE, size = 2.8,
+                                                   label = total), inherit.aes = FALSE, size = text_size * 0.85,
                        colour = "grey45", hjust = 0) +
     ggplot2::scale_fill_gradient(low = "#f4f7fb", high = "#1b6ca8", limits = c(0, 1), na.value = "grey95",
                                  guide = "none") +
@@ -179,14 +179,14 @@ xwoba_by_pitch <- function(d, pitcher_id, batter_id) {
     dplyr::mutate(pitch_group = factor(pitch_group, levels = rev(groups)))
 }
 
-plot_xwoba_by_pitch <- function(d, pitcher_id, batter_id) {
+plot_xwoba_by_pitch <- function(d, pitcher_id, batter_id, text_size = 3) {
   df <- xwoba_by_pitch(d, pitcher_id, batter_id)
   league <- dplyr::distinct(df, pitch_group, league_xwoba) |> dplyr::group_by(pitch_group) |>
     dplyr::summarise(league_xwoba = mean(league_xwoba), .groups = "drop")
   ggplot2::ggplot(df, ggplot2::aes(xwoba, pitch_group, fill = who)) +
     ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.75), width = 0.7) +
     ggplot2::geom_text(ggplot2::aes(label = paste0(woba_fmt(xwoba), "  (", pa, " PA)")),
-                       position = ggplot2::position_dodge(width = 0.75), hjust = -0.1, size = 3) +
+                       position = ggplot2::position_dodge(width = 0.75), hjust = -0.1, size = text_size) +
     ggplot2::geom_point(data = league, ggplot2::aes(league_xwoba, pitch_group), inherit.aes = FALSE,
                         shape = 124, size = 6, colour = "grey30") +
     ggplot2::scale_y_discrete(labels = PITCH_GROUP_NAMES) +
@@ -297,14 +297,14 @@ predict_next_pitch <- function(d, model, pitcher_id, batter_id, situation = DEFA
   tibble::tibble(pitch_group = PITCH_GROUPS, model = as.numeric(colSums(p * w)), usual = as.numeric(p3[1, ]))
 }
 
-plot_prediction <- function(pred, min_prob = 0.01) {
+plot_prediction <- function(pred, min_prob = 0.01, text_size = 3.6) {
   df <- pred |>
     dplyr::filter(model >= min_prob | usual >= min_prob) |>
     dplyr::mutate(pitch_group = factor(pitch_group, levels = pitch_group[order(model)]))
   ggplot2::ggplot(df, ggplot2::aes(model, pitch_group, fill = pitch_group)) +
     ggplot2::geom_col(width = 0.65) +
     ggplot2::geom_point(ggplot2::aes(x = usual), shape = 124, size = 7, colour = "grey20") +
-    ggplot2::geom_text(ggplot2::aes(label = pct(model)), hjust = -0.25, size = 3.6) +
+    ggplot2::geom_text(ggplot2::aes(label = pct(model)), hjust = -0.25, size = text_size) +
     ggplot2::scale_fill_manual(values = PITCH_COLORS, guide = "none") +
     ggplot2::scale_y_discrete(labels = PITCH_GROUP_NAMES) +
     ggplot2::scale_x_continuous(labels = scales::percent, limits = c(0, max(1, max(df$model) + 0.12)),

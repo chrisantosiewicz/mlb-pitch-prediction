@@ -75,7 +75,7 @@ DBI::dbDisconnect(con, shutdown = TRUE)
 
 # ---- app bundle: shared code + final model ----
 dir.create("app/lib", showWarnings = FALSE)   # not app/R: Shiny auto-sources that folder alphabetically
-invisible(file.copy(c("R/constants.R", "R/features.R", "R/boost_model.R", "R/report.R"), "app/lib", overwrite = TRUE))
+invisible(file.copy(c("R/constants.R", "R/features.R", "R/boost_model.R", "R/report.R", "R/report_pdf.R"), "app/lib", overwrite = TRUE))
 dir.create("app/models", showWarnings = FALSE)
 invisible(file.copy("models/final_xgboost.ubj", "app/models", overwrite = TRUE))
 
