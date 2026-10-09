@@ -22,3 +22,8 @@ _freeze/
 
 # logs
 logs/
+
+# app bundle copies, rebuilt by pipeline/11_app_data.R
+app/lib/
+app/models/
+rsconnect/

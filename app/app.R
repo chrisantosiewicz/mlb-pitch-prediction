@@ -1,0 +1,161 @@
+# MLB matchup report: next-pitch model + pitcher-vs-batter advance report.
+# Run from the project root:  shiny::runApp("app")
+
+suppressPackageStartupMessages({
+  library(shiny)
+  library(bslib)
+  library(dplyr)
+  library(ggplot2)
+})
+for (f in c("constants", "features", "boost_model", "report")) source(file.path("lib", paste0(f, ".R")))
+
+d <- load_report_data("data")
+model <- xgboost::xgb.load("models/final_xgboost.ubj")
+
+player_choices <- function(role, min_pitches) {
+  p <- d$players |>
+    filter(role == !!role, pitches >= min_pitches, !is.na(full_name)) |>
+    arrange(desc(pitches))
+  hand <- if (role == "P") p$pitch_hand else p$bat_side
+  stats::setNames(p$player_id, sprintf("%s (%s, %s)", p$full_name, p$team, hand))
+}
+PITCHERS <- player_choices("P", 300)
+BATTERS <- player_choices("B", 300)
+default_id <- function(choices, name) {
+  hit <- grep(paste0("^", name, " \\("), names(choices))
+  if (length(hit)) choices[[hit[1]]] else choices[[1]]
+}
+
+RESULT_LABELS <- c(UNKNOWN = "Unknown (average)", ball = "Ball", called = "Called strike",
+                   whiff = "Swinging strike", foul = "Foul")
+BASE_LABELS <- c("Empty" = "___", "1st" = "1__", "2nd" = "_2_", "3rd" = "__3", "1st & 2nd" = "12_",
+                 "1st & 3rd" = "1_3", "2nd & 3rd" = "_23", "Loaded" = "123")
+SCORE_LABELS <- c("Tied" = "tied", "Up 1" = "up1", "Up 2-3" = "up2-3", "Up 4+" = "up4+",
+                  "Down 1" = "down1", "Down 2-3" = "down2-3", "Down 4+" = "down4+")
+
+theme <- bs_theme(version = 5, bootswatch = "flatly", primary = "#1b4f72",
+                  base_font = font_google("Inter"), heading_font = font_google("Inter"))
+
+ui <- page_sidebar(
+  title = "MLB Matchup Report",
+  fillable = FALSE,   # a scrolling report page, not a fixed-height dashboard
+  theme = theme,
+  sidebar = sidebar(
+    width = 320,
+    selectizeInput("pitcher", "Pitcher", choices = NULL),
+    selectizeInput("batter", "Batter", choices = NULL),
+    hr(),
+    h6("Situation for the next pitch"),
+    selectInput("count", "Count", FACTOR_LEVELS$count_str, "0-2"),
+    uiOutput("prev_inputs"),
+    layout_columns(
+      selectInput("base_state", "Runners", BASE_LABELS),
+      selectInput("outs", "Outs", 0:2)
+    ),
+    layout_columns(
+      selectInput("inning", "Inning", FACTOR_LEVELS$inning_bkt),
+      selectInput("score", "Pitcher's team", SCORE_LABELS)
+    ),
+    layout_columns(
+      selectInput("tto", "Time through order", c("1st" = 1, "2nd" = 2, "3rd+" = 3)),
+      selectInput("pitch_count", "Pitch count", FACTOR_LEVELS$pitch_count_bkt)
+    ),
+    checkboxInput("starter", "Pitcher started this game", TRUE),
+    hr(),
+    selectInput("bucket", "Location maps: counts", names(COUNT_BUCKETS)),
+    checkboxInput("family", "Show pitch mix as fastball / breaking / offspeed", FALSE)
+  ),
+  uiOutput("header"),
+  layout_columns(
+    col_widths = c(5, 7),
+    card(card_header("Predicted next pitch"), plotOutput("prediction", height = 300),
+         tableOutput("family_table"), card_footer(textOutput("pred_note"))),
+    card(card_header("Pitch mix by count"), plotOutput("count_mix", height = 400))
+  ),
+  card(card_header("Where his pitches go"), plotOutput("locations", height = 300)),
+  layout_columns(
+    col_widths = c(6, 6),
+    card(card_header("Expected outcomes by pitch type"), plotOutput("xwoba", height = 320)),
+    card(card_header("Arsenal vs. this side"), tableOutput("arsenal"),
+         card_header("Platoon splits"), tableOutput("platoon"))
+  ),
+  tags$footer(class = "text-muted small p-2", textOutput("footer"))
+)
+
+server <- function(input, output, session) {
+  updateSelectizeInput(session, "pitcher", choices = PITCHERS, server = TRUE,
+                       selected = default_id(PITCHERS, "Paul Skenes"))
+  updateSelectizeInput(session, "batter", choices = BATTERS, server = TRUE,
+                       selected = default_id(BATTERS, "Shohei Ohtani"))
+
+  ids <- reactive({
+    req(input$pitcher, input$batter)
+    list(p = as.integer(input$pitcher), b = as.integer(input$batter))
+  })
+  mu <- reactive(matchup(d, ids()$p, ids()$b))
+  groups <- reactive(shown_groups(d, ids()$p, mu()$stand))
+
+  output$prev_inputs <- renderUI({
+    if (input$count == "0-0") return(helpText("First pitch of the at-bat."))
+    pitch_opts <- c("Unknown (average)" = "UNKNOWN", stats::setNames(groups(), PITCH_GROUP_NAMES[groups()]))
+    results <- c("UNKNOWN", possible_results(input$count))
+    tagList(
+      layout_columns(
+        selectInput("prev1", "Previous pitch", pitch_opts),
+        selectInput("prev1_result", "Its result", stats::setNames(results, RESULT_LABELS[results]))
+      ),
+      if (sum(as.integer(strsplit(input$count, "-")[[1]])) >= 2)
+        selectInput("prev2", "Pitch before that", pitch_opts)
+    )
+  })
+
+  situation <- reactive({
+    list(count = input$count,
+         prev1 = input$prev1 %||% "UNKNOWN", prev1_result = input$prev1_result %||% "UNKNOWN",
+         prev2 = input$prev2 %||% "UNKNOWN",
+         base_state = input$base_state, outs = input$outs, inning = input$inning, score = input$score,
+         tto = input$tto, pitch_count = input$pitch_count, starter = input$starter)
+  })
+  pred <- reactive(predict_next_pitch(d, model, ids()$p, ids()$b, situation()))
+
+  output$header <- renderUI({
+    m <- mu()
+    h2h <- head_to_head_summary(d, ids()$p, ids()$b)
+    flags <- c(if (isTRUE(m$flags$mix_changed)) "Mix changed this season",
+               if (isTRUE(m$flags$relabeled)) "Pitch relabel repaired")
+    layout_columns(
+      value_box(title = sprintf("Pitcher (%sHP, %s)", m$p_throws, m$pitcher$team),
+                value = m$pitcher$full_name,
+                p(sprintf("%s pitches in %s", format(m$pitcher$pitches, big.mark = ","), d$meta$report_season)),
+                if (length(flags)) span(class = "badge bg-warning text-dark", paste(flags, collapse = " · ")),
+                theme = "primary"),
+      value_box(title = sprintf("Batter (bats %s, %s)", m$batter$bat_side, m$batter$team),
+                value = m$batter$full_name,
+                p(sprintf("Hits from the %s side vs. this pitcher", ifelse(m$stand == "L", "left", "right"))),
+                theme = "secondary"),
+      value_box(title = "Head to head", value = if (is.null(h2h)) "No history" else paste(h2h$PA, "PA"),
+                if (!is.null(h2h)) p(sprintf("%s: %d H, %d HR, %d K, %d BB, xwOBA %s",
+                                             h2h$Seasons, h2h$H, h2h$HR, h2h$K, h2h$BB, h2h$xwOBA)),
+                theme = "light")
+    )
+  })
+
+  output$prediction <- renderPlot(plot_prediction(pred()), res = 96)
+  output$family_table <- renderTable(family_summary(pred()), striped = TRUE, width = "100%")
+  output$pred_note <- renderText({
+    s <- situation()
+    unknown <- s$count != "0-0" && "UNKNOWN" %in% c(s$prev1, s$prev1_result)
+    paste0(d$meta$app_model, " model.",
+           if (unknown) " Unknown earlier pitches are averaged over his usual mix." else "")
+  })
+  output$count_mix <- renderPlot(plot_count_mix(d, ids()$p, mu()$stand, input$family), res = 96)
+  output$locations <- renderPlot(plot_locations(d, ids()$p, mu()$stand, input$bucket), res = 96)
+  output$xwoba <- renderPlot(plot_xwoba_by_pitch(d, ids()$p, ids()$b), res = 96)
+  output$arsenal <- renderTable(arsenal_table(d, ids()$p, mu()$stand), striped = TRUE, width = "100%")
+  output$platoon <- renderTable(platoon_table(d, ids()$p, ids()$b), striped = TRUE, width = "100%")
+  output$footer <- renderText(sprintf(
+    "Statcast data through %s. Pitch mix and locations: %s regular season. xwOBA: %s. Next-pitch model trained on 2023-2025 and tested once on 2026.",
+    d$meta$data_through, d$meta$report_season, paste(range(unlist(d$meta$outcome_seasons)), collapse = "-")))
+}
+
+shinyApp(ui, server)

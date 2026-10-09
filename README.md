@@ -2,7 +2,7 @@
 
 Predicting a pitcher's next pitch type from game context, and turning it into a one-page pitcher-vs-batter advance report.
 
-**Status:** Phase 3 (gradient boosting and the 2026 test) complete and in review. See [docs/phase3_summary.md](docs/phase3_summary.md) and [PLAN.md](PLAN.md).
+**Status:** Phase 4 (Shiny matchup app) built and in review. Results so far: [docs/phase3_summary.md](docs/phase3_summary.md). Roadmap: [PLAN.md](PLAN.md).
 
 ## What's here so far
 
@@ -28,6 +28,15 @@ source("run_all.R")        # pull -> clean -> baseline -> mixes -> features -> m
 
 The first pull downloads about 3.6M pitches (2022-2026 regular seasons; 2022 is history only) from Baseball Savant one game day at a time and takes a while; later runs skip days already on disk. Data files live in `data/` and are not committed.
 
+
+## Matchup app
+
+`app/` is a Shiny app: pick any pitcher and batter for a one-page advance report with the model's predicted next pitch for a chosen situation, pitch mix by count, location density maps, expected outcomes (xwOBA) by pitch type, the pitcher's arsenal and platoon splits, and their head-to-head history.
+
+```r
+source("pipeline/11_app_data.R")   # builds app/data and copies shared code + model into app/
+shiny::runApp("app")
+```
 ## Layout
 
 ```

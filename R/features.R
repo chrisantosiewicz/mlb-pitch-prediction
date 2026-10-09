@@ -88,5 +88,11 @@ prepare_factors <- function(df) {
 }
 
 model_matrix <- function(df) {
+  # sparse.model.matrix fails on a single row (the app scores one situation),
+  # so small inputs go through the dense builder; column names are identical.
+  if (nrow(df) < 50) {
+    m <- stats::model.matrix(FEATURE_FORMULA, data = df)
+    return(Matrix::Matrix(m[, -1, drop = FALSE], sparse = TRUE))
+  }
   Matrix::sparse.model.matrix(FEATURE_FORMULA, data = df)[, -1, drop = FALSE]
 }

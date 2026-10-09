@@ -55,3 +55,14 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | Bootstrap over games, not pitches | Pitches in the same game are correlated; resampling games gives honest intervals. |
 | App uses xgboost | Pre-registered rule: best 2026 log loss among models that beat L3, unless within the logistic model's interval. xgboost beat it clearly (0.041, interval 0.039 to 0.042). |
 | Family-on-relabels rule dropped | It was worse on 2026 relabel-repaired games (interval +0.012 to +0.032). The 2025 edge didn't replicate. |
+
+## Phase 4 choices
+
+| Choice | Why |
+|---|---|
+| App reads small precomputed tables (about 11 MB), never the full pitch table | Fast, and it fits free hosting limits. `pipeline/11_app_data.R` rebuilds them. |
+| One set of report functions (`R/report.R`) for the app and the PDF | The app, the PDF and the website can never show different numbers. |
+| Unknown previous pitch = average over his likely previous pitches | The model learned that "no previous pitch" means a 0-0 count. Asking it about 0-2 with no previous pitch would be a situation it never saw. Averaging over his mix and over the results that could have produced the count is the honest answer to "I don't know what came before". |
+| Location shown as density maps, not a model | Public data shows where the ball ended up, not the catcher's target. The maps say so, and blend intent with misses (Chris's concern, 2026-10-08). |
+| xwOBA by pitch type shrunk toward league (60 PA) on 2025-26 | One season of PAs ending on a given pitch type is thin; shrinkage stops a 12-PA sample from showing .700. |
+| Pitch mix and locations from 2026 only | The report should describe the pitcher as he is now. |
