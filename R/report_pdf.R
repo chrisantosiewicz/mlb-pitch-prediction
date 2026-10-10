@@ -52,7 +52,7 @@ table_panel <- function(df, title, size = BASE - 1) {
   # and top of its cell.
   title_grob <- grid::textGrob(title, x = 0, hjust = 0,
                                gp = grid::gpar(fontsize = BASE + 3, fontface = "bold", col = NAVY))
-  tg <- gtable::gtable_add_rows(tg, grid::unit(2.2, "line"), pos = 0)
+  tg <- gtable::gtable_add_rows(tg, grid::unit(1.5, "line"), pos = 0)
   tg <- gtable::gtable_add_grob(tg, title_grob, t = 1, l = 1, r = ncol(tg), clip = "off")
   tg$vp <- grid::viewport(x = 0, y = 1, just = c("left", "top"),
                           width = sum(tg$widths), height = sum(tg$heights))
@@ -71,8 +71,8 @@ h2h_box <- function(h2h) {
   g <- grid::gTree(children = grid::gList(
     grid::roundrectGrob(width = grid::unit(0.92, "npc"), height = box_h, r = grid::unit(4, "pt"),
                         gp = grid::gpar(fill = NAVY, col = NA)),
-    grid::textGrob("HEAD TO HEAD", y = grid::unit(0.5, "npc") + box_h * 0.5 - grid::unit(1.4, "lines"),
-                   gp = grid::gpar(fontsize = BASE - 1, fontface = "bold", col = "#c9d3df")),
+    grid::textGrob("HEAD TO HEAD", y = grid::unit(0.5, "npc") + box_h * 0.5 - grid::unit(1.5, "lines"),
+                   gp = grid::gpar(fontsize = BASE + 4, fontface = "bold", col = "white")),
     grid::textGrob(paste(lines, collapse = "\n"), y = grid::unit(0.5, "npc") - grid::unit(0.9, "lines"),
                    gp = grid::gpar(fontsize = BASE + 1, col = "white", lineheight = 1.4))))
   patchwork::wrap_elements(full = g)

@@ -19,6 +19,7 @@ player_choices <- function(role, min_pitches) {
   hand <- if (role == "P") p$pitch_hand else p$bat_side
   stats::setNames(p$player_id, sprintf("%s (%s, %s)", p$full_name, p$team, hand))
 }
+LOCATION_PANEL_PX <- 260   # one pitch-location map, about the size the old four-across layout gave
 PITCHERS <- player_choices("P", 300)
 BATTERS <- player_choices("B", 300)
 default_id <- function(choices, name) {
@@ -84,7 +85,8 @@ ui <- page_sidebar(
   ),
   card(section_header("Model by count", "earlier pitches unknown, averaged over his mix"),
        tableOutput("key_counts")),
-  card(section_header("Pitch locations", "catcher's view"), plotOutput("locations", height = 300)),
+  card(section_header("Pitch locations", "catcher's view, every pitch he throws"),
+       div(class = "location-scroll", plotOutput("locations", height = 300))),
   layout_columns(
     col_widths = c(6, 6),
     card(section_header("Expected outcomes by pitch type"), plotOutput("xwoba", height = 320)),
@@ -188,11 +190,16 @@ server <- function(input, output, session) {
            if (unknown) " Unknown earlier pitches are averaged over his usual mix." else "")
   })
   output$count_mix <- renderPlot(plot_count_mix(d, ids()$p, mu()$stand, input$family), res = 96)
-  output$locations <- renderPlot(plot_locations(d, ids()$p, mu()$stand, input$bucket), res = 96)
+  # Every pitch he throws, each map the same size as before (fixed width per
+  # pitch). When they don't fit, the card scrolls sideways instead of shrinking.
+  output$locations <- renderPlot(
+    plot_locations(d, ids()$p, mu()$stand, input$bucket, max_types = length(PITCH_GROUPS)),
+    res = 96, height = 300, width = function() LOCATION_PANEL_PX * max(length(groups()), 1))
   output$xwoba <- renderPlot(plot_xwoba_by_pitch(d, ids()$p, ids()$b), res = 96)
   output$arsenal <- renderTable({
     a <- arsenal_table(d, ids()$p, mu()$stand)
     a$Pitch <- pitch_dot(names(PITCH_GROUP_NAMES)[match(a$Pitch, PITCH_GROUP_NAMES)])
+    a$Pitches <- format(as.integer(a$Pitches), big.mark = ",")
     a
   }, striped = TRUE, width = "100%", sanitize.text.function = identity)
   output$mix_note <- renderText(sprintf("vs. %sHB, %s", mu()$stand, d$meta$report_season))
