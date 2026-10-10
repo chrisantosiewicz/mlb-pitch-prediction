@@ -47,8 +47,35 @@ table_panel <- function(df, title, size = BASE - 1) {
     core = list(bg_params = list(fill = c("#f4f7fb", "white"), col = NA)),
     colhead = list(fg_params = list(fontface = "bold", col = NAVY)))
   tg <- gridExtra::tableGrob(as.data.frame(df), rows = NULL, theme = th)
-  tg$vp <- grid::viewport(x = 0, just = "left")   # left-align under the title
-  with_title(tg, title)
+  # The title becomes the table's own first row, so the table's left edge sits
+  # exactly under where the title text starts; the whole block hugs the left
+  # and top of its cell.
+  title_grob <- grid::textGrob(title, x = 0, hjust = 0,
+                               gp = grid::gpar(fontsize = BASE + 3, fontface = "bold", col = NAVY))
+  tg <- gtable::gtable_add_rows(tg, grid::unit(2.2, "line"), pos = 0)
+  tg <- gtable::gtable_add_grob(tg, title_grob, t = 1, l = 1, r = ncol(tg), clip = "off")
+  tg$vp <- grid::viewport(x = 0, y = 1, just = c("left", "top"),
+                          width = sum(tg$widths), height = sum(tg$heights))
+  patchwork::wrap_elements(full = tg)
+}
+
+# Head-to-head box shown beside the takeaways on page 1.
+h2h_box <- function(h2h) {
+  lines <- if (is.null(h2h)) "No head-to-head history" else c(
+    sprintf("%d PA  (%s)", h2h$PA, h2h$Seasons),
+    sprintf("%d H  ·  %d HR", h2h$H, h2h$HR),
+    sprintf("%d K  ·  %d BB", h2h$K, h2h$BB),
+    sprintf("xwOBA %s", h2h$xwOBA))
+  n <- length(lines)
+  box_h <- grid::unit(3.2 + 1.5 * n, "lines")
+  g <- grid::gTree(children = grid::gList(
+    grid::roundrectGrob(width = grid::unit(0.92, "npc"), height = box_h, r = grid::unit(4, "pt"),
+                        gp = grid::gpar(fill = NAVY, col = NA)),
+    grid::textGrob("HEAD TO HEAD", y = grid::unit(0.5, "npc") + box_h * 0.5 - grid::unit(1.4, "lines"),
+                   gp = grid::gpar(fontsize = BASE - 1, fontface = "bold", col = "#c9d3df")),
+    grid::textGrob(paste(lines, collapse = "\n"), y = grid::unit(0.5, "npc") - grid::unit(0.9, "lines"),
+                   gp = grid::gpar(fontsize = BASE + 1, col = "white", lineheight = 1.4))))
+  patchwork::wrap_elements(full = g)
 }
 
 # ---- page 1 pieces ----
@@ -159,11 +186,9 @@ build_page1 <- function(d, model, pitcher_id, batter_id, situation, first_pitch)
   h2h <- head_to_head_summary(d, pitcher_id, batter_id)
   flags <- c(if (isTRUE(m$flags$mix_changed)) "His pitch mix has changed a lot this season.",
              if (isTRUE(m$flags$relabeled)) "One of his pitches was relabeled by Statcast this season.")
-  h2h_line <- if (is.null(h2h)) "No head-to-head history." else
-    sprintf("Head to head (%s): %d PA, %d H, %d HR, %d K, %d BB.", h2h$Seasons, h2h$PA, h2h$H, h2h$HR, h2h$K, h2h$BB)
-
   keys <- text_panel(c(key_takeaways(d, pitcher_id, batter_id, first_pitch), flags),
-                     title = "Three things to know", extra = h2h_line)
+                     title = "Three things to know", width = 74, size = BASE)
+  h2h_panel <- h2h_box(h2h)
   pred_panel <- titled(plot_prediction(pred, text_size = 3.3), sprintf("If it's %s...", situation$count),
                        subtitle = sprintf("Fastball %s · Breaking %s · Offspeed %s", pct(fam[["FB"]]),
                                           pct(fam[["BR"]]), pct(fam[["OS"]])),
@@ -184,13 +209,14 @@ build_page1 <- function(d, model, pitcher_id, batter_id, situation, first_pitch)
     ggplot2::theme(axis.text = ggplot2::element_blank(), panel.grid = ggplot2::element_blank(),
                    strip.text = ggplot2::element_text(face = "bold", size = BASE))
 
+  # 10 columns: the takeaways take 6, the head-to-head box 4.
   design <- "
-AA
-BC
-DD
-EE"
-  patchwork::wrap_plots(A = keys, B = pred_panel, C = sit_panel, D = edge_panel, E = loc_panel,
-                        design = design, heights = c(0.95, 1.2, 0.95, 1.15)) +
+AAAAAAHHHH
+BBBBBCCCCC
+DDDDDDDDDD
+EEEEEEEEEE"
+  patchwork::wrap_plots(A = keys, H = h2h_panel, B = pred_panel, C = sit_panel, D = edge_panel, E = loc_panel,
+                        design = design, heights = c(1.1, 1.2, 0.95, 1.05)) +
     patchwork::plot_annotation(
       title = sprintf("%s  vs.  %s", m$pitcher$full_name, m$batter$full_name),
       subtitle = sprintf("THE GAME PLAN  ·  %sHP, %s  vs.  bats %s, %s  ·  Statcast through %s",
@@ -222,22 +248,23 @@ build_page2 <- function(d, model, pitcher_id, batter_id, situation, probs) {
     ggplot2::theme(legend.position = "right", panel.grid.major.y = ggplot2::element_blank(),
                    legend.text = ggplot2::element_text(size = BASE - 1))
   ars <- arsenal_table(d, pitcher_id, m$stand) |>
-    dplyr::rename(`H-brk (in)` = `H-brk"`, `V-brk (in)` = `V-brk"`)
-  ars_panel <- table_panel(ars, sprintf("Arsenal vs. %sHB", m$stand), size = BASE - 2)
-  plat_panel <- table_panel(platoon_table(d, pitcher_id, batter_id), "Platoon splits (2025-26)", size = BASE - 2)
+    dplyr::rename(`H-brk` = `H-brk"`, `V-brk` = `V-brk"`, Whiff = `Whiff%`, Chase = `Chase%`, N = Pitches)
+  ars_panel <- table_panel(ars, sprintf("Arsenal vs. %sHB", m$stand), size = BASE - 2.5)
+  plat <- platoon_table(d, pitcher_id, batter_id) |> dplyr::mutate(Player = sub(".* ", "", Player))
+  plat_panel <- table_panel(plat, "Platoon splits (2025-26)", size = BASE - 2.5)
   gloss <- text_panel(GLOSSARY, title = "How to read this", size = BASE - 2.5, width = 150)
 
+  # 20 columns so the two tables can share a row at different widths.
   design <- "
-AB
-CD
-EE
-FF
-GG
-HH
-II"
+AAAAAAAAAABBBBBBBBBB
+CCCCCCCCCCDDDDDDDDDD
+EEEEEEEEEEEEEEEEEEEE
+FFFFFFFFFFFFFFFFFFFF
+GGGGGGGGGGGHHHHHHHHH
+IIIIIIIIIIIIIIIIIIII"
   patchwork::wrap_plots(A = p_pct, B = b_pct, C = mix_panel, D = model_panel, E = loc_panel, F = xw_panel,
                         G = ars_panel, H = plat_panel, I = gloss, design = design,
-                        heights = c(1.1, 1.7, 0.9, 1.65, 1.4, 1.1, 1.0)) +
+                        heights = c(1.4, 1.7, 0.95, 1.5, 1.75, 0.95)) +
     patchwork::plot_annotation(
       title = "THE DETAIL",
       subtitle = sprintf("%s vs. %s  ·  pitch mix and locations: 2026  ·  outcomes: 2025-26",

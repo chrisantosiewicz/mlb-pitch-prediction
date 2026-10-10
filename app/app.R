@@ -19,7 +19,6 @@ player_choices <- function(role, min_pitches) {
   hand <- if (role == "P") p$pitch_hand else p$bat_side
   stats::setNames(p$player_id, sprintf("%s (%s, %s)", p$full_name, p$team, hand))
 }
-LOCATION_PANEL_PX <- 260   # width of one pitch-location panel in the app
 PITCHERS <- player_choices("P", 300)
 BATTERS <- player_choices("B", 300)
 default_id <- function(choices, name) {
@@ -85,8 +84,7 @@ ui <- page_sidebar(
   ),
   card(section_header("Model by count", "earlier pitches unknown, averaged over his mix"),
        tableOutput("key_counts")),
-  card(section_header("Pitch locations", "catcher's view, every pitch he throws; scroll sideways for more"),
-       div(class = "location-scroll", plotOutput("locations", height = 300, width = "auto"))),
+  card(section_header("Pitch locations", "catcher's view"), plotOutput("locations", height = 300)),
   layout_columns(
     col_widths = c(6, 6),
     card(section_header("Expected outcomes by pitch type"), plotOutput("xwoba", height = 320)),
@@ -190,10 +188,7 @@ server <- function(input, output, session) {
            if (unknown) " Unknown earlier pitches are averaged over his usual mix." else "")
   })
   output$count_mix <- renderPlot(plot_count_mix(d, ids()$p, mu()$stand, input$family), res = 96)
-  # One panel per pitch he throws; the plot grows sideways and the card scrolls.
-  output$locations <- renderPlot(
-    plot_locations(d, ids()$p, mu()$stand, input$bucket, max_types = length(PITCH_GROUPS)),
-    res = 96, height = 300, width = function() max(LOCATION_PANEL_PX * length(groups()), 600))
+  output$locations <- renderPlot(plot_locations(d, ids()$p, mu()$stand, input$bucket), res = 96)
   output$xwoba <- renderPlot(plot_xwoba_by_pitch(d, ids()$p, ids()$b), res = 96)
   output$arsenal <- renderTable({
     a <- arsenal_table(d, ids()$p, mu()$stand)
