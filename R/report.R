@@ -299,7 +299,7 @@ expand_situation <- function(d, pitcher_id, batter_id, s) {
     dplyr::mutate(w = p1[prev1] * results[prev1_result] * p2[prev2])
 }
 
-predict_next_pitch <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION) {
+predict_next_pitch <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION, restrict = TRUE) {
   combos <- expand_situation(d, pitcher_id, batter_id, situation)
   # Build the situation once, then vary only the previous-pitch columns.
   base <- situation_row(d, pitcher_id, batter_id,
@@ -316,6 +316,7 @@ predict_next_pitch <- function(d, model, pitcher_id, batter_id, situation = DEFA
   p <- predict_boost(model, boost_dmatrix(rows, offset))
   w <- combos$w / sum(combos$w)
   out <- tibble::tibble(pitch_group = PITCH_GROUPS, model = as.numeric(colSums(p * w)), usual = as.numeric(p3[1, ]))
+  if (!restrict) return(out)   # scoring needs every pitch type to have a probability
   restrict_to_repertoire(out, shown_groups(d, pitcher_id, matchup(d, pitcher_id, batter_id)$stand))
 }
 
