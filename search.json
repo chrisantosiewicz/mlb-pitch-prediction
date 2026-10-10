@@ -1,0 +1,198 @@
+[
+  {
+    "objectID": "results.html",
+    "href": "results.html",
+    "title": "Results on 2026",
+    "section": "",
+    "text": "All numbers on this page come from the 2026 regular season, scored once with settings fixed on 2025. The full tables are in test_results.md."
+  },
+  {
+    "objectID": "results.html#headline",
+    "href": "results.html#headline",
+    "title": "Results on 2026",
+    "section": "Headline",
+    "text": "Headline\n\n\n\nModel\nLog loss\nTop-1\nFamily log loss\nFamily top-1\n\n\n\n\nPrior mix (baseline)\n1.580\n37.2%\n0.916\n56.2%\n\n\n+ current form\n1.417\n39.0%\n0.888\n56.7%\n\n\n+ platoon tilt\n1.390\n40.1%\n0.873\n56.8%\n\n\nLogistic, 8 pitches\n1.327\n43.3%\n0.833\n58.4%\n\n\nLogistic, family then pitch\n1.349\n42.4%\n0.831\n58.5%\n\n\nLogistic + batter layer\n1.324\n43.6%\n0.830\n58.7%\n\n\nxgboost\n1.283\n44.7%\n0.809\n59.7%"
+  },
+  {
+    "objectID": "results.html#what-each-piece-adds",
+    "href": "results.html#what-each-piece-adds",
+    "title": "Results on 2026",
+    "section": "What each piece adds",
+    "text": "What each piece adds\n\n\n\n\n\n\n\n\nStep\nLog-loss gain\n95% interval\n\n\n\n\nKnowing the pitcher better (prior mix → current form + platoon)\n0.190\n0.186 to 0.194\n\n\nThe situation, logistic\n0.064\n0.062 to 0.065\n\n\nBatter layer\n0.003\n0.003 to 0.004\n\n\nTrees over logistic\n0.041\n0.039 to 0.042\n\n\n\nMost of the gain comes from knowing the pitcher’s current mix. The situation adds a clear, real gain on top of that strong baseline. The batter layer is real but small: who’s pitching and the count matter far more than who’s hitting."
+  },
+  {
+    "objectID": "results.html#calibration",
+    "href": "results.html#calibration",
+    "title": "Results on 2026",
+    "section": "Calibration",
+    "text": "Calibration\n\n\nThe average gap between predicted and actual frequency is 0.4 percentage points or less for every pitch type. The pitcher’s mix alone (blue) is overconfident at high probabilities; the model (red) fixes that."
+  },
+  {
+    "objectID": "results.html#per-pitcher",
+    "href": "results.html#per-pitcher",
+    "title": "Results on 2026",
+    "section": "Per pitcher",
+    "text": "Per pitcher\n\nOf the 468 pitchers with 500+ pitches in 2026, the model beats the baseline for all of them and beats the best mix for 98%.\n\nBiggest gains: Ryan Rolison, Yusei Kikuchi and Shane Baz, all deep repertoires where count and sequence matter a lot.\nWhere it doesn’t help: John King, Josh Hader and Pete Fairbanks, mostly two-pitch relievers whose mix already says nearly everything. The model loses a little by applying league-wide count habits that don’t fit them."
+  },
+  {
+    "objectID": "results.html#by-count",
+    "href": "results.html#by-count",
+    "title": "Results on 2026",
+    "section": "By count",
+    "text": "By count\n\n\n\nCount\nMix only\nModel\nGain\n\n\n\n\n3-0\n1.165\n0.648\n0.517\n\n\n3-1\n1.289\n1.070\n0.219\n\n\n0-2\n1.414\n1.250\n0.164\n\n\n2-0\n1.332\n1.171\n0.161\n\n\n1-2\n1.429\n1.308\n0.120\n\n\n0-1\n1.437\n1.334\n0.103\n\n\n1-0\n1.364\n1.269\n0.094\n\n\n1-1\n1.423\n1.330\n0.093\n\n\n0-0\n1.388\n1.299\n0.089\n\n\n2-1\n1.357\n1.274\n0.083\n\n\n3-2\n1.301\n1.220\n0.082\n\n\n2-2\n1.406\n1.335\n0.071"
+  },
+  {
+    "objectID": "results.html#an-idea-that-didnt-hold-up",
+    "href": "results.html#an-idea-that-didnt-hold-up",
+    "title": "Results on 2026",
+    "section": "An idea that didn’t hold up",
+    "text": "An idea that didn’t hold up\nOn 2025, a family-first model (predict fastball / breaking / offspeed, then the pitch from his mix) looked better for pitchers whose pitch labels had changed. I wrote “use it for relabeled pitchers” into the test plan before scoring 2026. On 2026 it was worse for those pitchers (1.275 vs. 1.253 log loss, interval +0.012 to +0.032), so it was dropped. The 2025 edge came from about 2,000 pitches. The family view stays in the report because it’s what a hitter prepares for."
+  },
+  {
+    "objectID": "results.html#limitations",
+    "href": "results.html#limitations",
+    "title": "Results on 2026",
+    "section": "Limitations",
+    "text": "Limitations\n\nPitch type only, not location.\nPublic data only: no catcher targets, game plans or scouting reports.\nPitch labels come from Savant’s classifier, and relabels are only partly repaired.\nxgboost’s interactions aren’t directly readable. The logistic model is the one to explain; the trees show interactions add about as much again."
+  },
+  {
+    "objectID": "methods.html",
+    "href": "methods.html",
+    "title": "Methods, in plain language",
+    "section": "",
+    "text": "For each pitch, give a probability for each of eight pitch types using only what was known before the pitch: who’s pitching and batting, the count, the previous pitches and what happened on them, runners, outs, score, inning, times through the order and pitch count."
+  },
+  {
+    "objectID": "methods.html#the-question",
+    "href": "methods.html#the-question",
+    "title": "Methods, in plain language",
+    "section": "",
+    "text": "For each pitch, give a probability for each of eight pitch types using only what was known before the pitch: who’s pitching and batting, the count, the previous pitches and what happened on them, runners, outs, score, inning, times through the order and pitch count."
+  },
+  {
+    "objectID": "methods.html#step-1-know-the-pitcher",
+    "href": "methods.html#step-1-know-the-pitcher",
+    "title": "Methods, in plain language",
+    "section": "Step 1: Know the pitcher",
+    "text": "Step 1: Know the pitcher\nMost of a pitch’s predictability is the pitcher himself. The model starts from his pitch mix, built in three layers:\n\nPrior mix. His pitches from earlier seasons, with last season counting most (two seasons back counts a quarter as much). It’s shrunk toward the league mix for pitchers with the same throwing hand and role: each pitcher starts with 100 pitches’ worth of league average. With 3,000 pitches of history that barely matters. With 30 it decides almost everything. This is empirical Bayes, and it stops the model from saying “0% curveball” because a rookie hasn’t thrown one yet.\nCurrent form. The prior mix updated with his pitches this season, through his previous game only. Pitch mixes change a lot from year to year, and a pitcher’s first few outings already show how.\nPlatoon tilt. His usual split against left- vs. right-handed hitters.\n\nBefore the prior mix is built, Savant relabels are repaired: if a pitch he used to throw has vanished this season while a new one with the same velocity and movement has appeared, his history of the old label is credited to the new one."
+  },
+  {
+    "objectID": "methods.html#step-2-know-the-situation",
+    "href": "methods.html#step-2-know-the-situation",
+    "title": "Methods, in plain language",
+    "section": "Step 2: Know the situation",
+    "text": "Step 2: Know the situation\nTwo models take his mix as their starting point and learn how the situation moves him away from it.\n\nMultinomial logistic regression. One equation per pitch type turns the situation into a probability for each pitch. His mix enters as a fixed offset, so the model never relearns who throws what. Its coefficients are league-wide answers like “with two strikes, pitchers go to their breaking ball more often than usual.” A ridge penalty keeps the many dummy variables (count × handedness, previous pitch × its result) from overfitting.\nGradient boosting (xgboost). Trees fitted with the same starting point, so they can find interactions without anyone writing them by hand. For example: two strikes, a same-handed hitter, and a slider that just got a whiff.\n\nA batter layer adds how pitchers have attacked this hitter compared with what their own mixes predicted, using earlier games only and shrunk toward zero for hitters with little history."
+  },
+  {
+    "objectID": "methods.html#step-3-test-honestly",
+    "href": "methods.html#step-3-test-honestly",
+    "title": "Methods, in plain language",
+    "section": "Step 3: Test honestly",
+    "text": "Step 3: Test honestly\n\nTime split. Train on 2023-24, tune every setting on 2025, then refit on 2023-25 and score 2026 once.\nPre-registration. The models, metrics and decision rules for 2026 were committed to the repo before 2026 was scored.\nMetrics. Log loss is the headline because it rewards honest probabilities and heavily punishes confident misses. Top-1 accuracy is easier to explain but flatters pitchers who throw one pitch 60% of the time, so it’s always shown next to the baseline. Calibration plots check that “40%” means 40%.\nUncertainty. 95% intervals come from 500 bootstrap resamples of whole games, because pitches within a game aren’t independent."
+  },
+  {
+    "objectID": "methods.html#leakage-risks-and-guards",
+    "href": "methods.html#leakage-risks-and-guards",
+    "title": "Methods, in plain language",
+    "section": "Leakage risks and guards",
+    "text": "Leakage risks and guards\n\n\n\n\n\n\n\nRisk\nGuard\n\n\n\n\nUsing what’s measured on the pitch (velocity, location, result) as an input\nEvery field tagged by when it’s known; inputs whitelisted\n\n\nPitcher mix built from the season being predicted\nEarlier seasons plus this season through his previous game only\n\n\nRandom train/test split\nTime split; test season scored once\n\n\nTuning on the test season\nSeparate 2025 tuning season\n\n\nPrevious-pitch features crossing at-bats or out of order\nBuilt with ordered window functions within each at-bat; unit-tested\n\n\nA pitch type relabeled by Savant\nDetected with pitch physics; discussed as a limitation"
+  },
+  {
+    "objectID": "methods.html#what-the-model-cant-know",
+    "href": "methods.html#what-the-model-cant-know",
+    "title": "Methods, in plain language",
+    "section": "What the model can’t know",
+    "text": "What the model can’t know\nIt predicts pitch type, not location, and location is half of a pitcher’s decision. Public data shows where the ball ended up, not where the catcher set up, so the report shows location as density maps that blend intent with missed spots. The model doesn’t see the catcher, the game plan or the scouting report on the hitter. Expect real but modest gains over a pitcher’s own mix: pitchers are paid to be unpredictable."
+  },
+  {
+    "objectID": "data.html",
+    "href": "data.html",
+    "title": "Data and cleaning",
+    "section": "",
+    "text": "Pitch-level Statcast data from Baseball Savant, pulled with the baseballr package one game day at a time. A full day is about 4,500 pitches, well under Savant’s per-request limit, so no day is ever silently truncated. Player names and positions, and the schedule used for the completeness check, come from the MLB Stats API.\n\n\n\nSeason\nRole\nRegular-season pitches after cleaning\n\n\n\n\n2022\nHistory only (priors for 2023)\n708,279\n\n\n2023\nTraining\n718,871\n\n\n2024\nTraining\n710,537\n\n\n2025\nTuning\n710,341\n\n\n2026\nTest (scored once)\n714,625\n\n\n\nEvery completed regular-season game on the MLB schedule, 12,148 games across 2022-2026, is present in the data."
+  },
+  {
+    "objectID": "data.html#source",
+    "href": "data.html#source",
+    "title": "Data and cleaning",
+    "section": "",
+    "text": "Pitch-level Statcast data from Baseball Savant, pulled with the baseballr package one game day at a time. A full day is about 4,500 pitches, well under Savant’s per-request limit, so no day is ever silently truncated. Player names and positions, and the schedule used for the completeness check, come from the MLB Stats API.\n\n\n\nSeason\nRole\nRegular-season pitches after cleaning\n\n\n\n\n2022\nHistory only (priors for 2023)\n708,279\n\n\n2023\nTraining\n718,871\n\n\n2024\nTraining\n710,537\n\n\n2025\nTuning\n710,341\n\n\n2026\nTest (scored once)\n714,625\n\n\n\nEvery completed regular-season game on the MLB schedule, 12,148 games across 2022-2026, is present in the data."
+  },
+  {
+    "objectID": "data.html#cleaning-steps",
+    "href": "data.html#cleaning-steps",
+    "title": "Data and cleaning",
+    "section": "Cleaning steps",
+    "text": "Cleaning steps\nEach step is a SQL view in DuckDB with a row count logged after it (full cleaning log).\n\nRegular season only. Spring training, exhibitions and the postseason are dropped using Savant’s game_type.\nDuplicates removed. If a day is re-pulled (Savant revises recent data), the newest copy of each pitch wins.\nImpossible rows removed. Missing pitcher or batter, or a count or out total that can’t happen. None were found.\nPosition players pitching removed (about 9,500 pitches), using primary position from the MLB Stats API rather than a velocity guess. Two-way players like Ohtani are kept.\nEight pitch groups. Four-seam, sinker, cutter, slider, sweeper, curveball (curve, knuckle curve, slurve, slow curve), changeup and splitter (splitter, forkball).\n\nPitches outside those groups (automatic balls from pitch-clock violations, pitchouts, knuckleballs, eephus pitches) stay in the table so they still count as “the previous pitch” for the next one, but they’re never prediction targets."
+  },
+  {
+    "objectID": "data.html#the-leakage-guard",
+    "href": "data.html#the-leakage-guard",
+    "title": "Data and cleaning",
+    "section": "The leakage guard",
+    "text": "The leakage guard\nThe data dictionary documents all 120 Savant fields and 15 derived ones. Each is tagged with when it becomes known:\n\nBefore the pitch: count, runners, outs, score, handedness, times through the order. Only these can be model inputs.\nAfter the pitch: velocity, spin, location, result. Used in the report, never as an input for the same pitch.\nFuture: Savant includes pitcher_days_until_next_game, which is only knowable in hindsight. It’s tagged and never used."
+  },
+  {
+    "objectID": "data.html#known-data-issues",
+    "href": "data.html#known-data-issues",
+    "title": "Data and cleaning",
+    "section": "Known data issues",
+    "text": "Known data issues\n\nSavant relabels pitches. Some pitchers’ sliders became sweepers, or four-seamers became sinkers, between seasons. That’s a label change, not a new pitch. The pipeline detects and repairs clean relabels by matching velocity and movement, but only partly. 19 pitcher-seasons flipped their slider/sweeper split by 50+ points.\nTimes through the order comes from Savant’s n_thruorder_pitcher. It agrees with a version derived from the pitcher’s own batter count 99.8% of the time."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Predicting the next pitch",
+    "section": "",
+    "text": "Given the count, the previous pitches, who’s batting and the game situation, what does this pitcher throw next? I built a model that answers that with honest probabilities, tested it once on a season it had never seen, and turned it into the kind of pitcher-vs-batter advance report a coaching staff could use."
+  },
+  {
+    "objectID": "index.html#the-result",
+    "href": "index.html#the-result",
+    "title": "Predicting the next pitch",
+    "section": "The result",
+    "text": "The result\nScored once on the 2026 season, after every setting was fixed on 2025:\n\n\n\n\n\n\n\n\n\nModel\nLog loss (lower is better)\nTop-1 accuracy\nFastball / breaking / offspeed\n\n\n\n\nThe pitcher’s prior-season mix (baseline)\n1.580\n37.2%\n56.2%\n\n\nHis mix, updated with this season’s form and platoon split\n1.390\n40.1%\n56.8%\n\n\nMultinomial logistic regression (adds count, sequence, situation)\n1.327\n43.3%\n58.4%\n\n\nGradient boosting (xgboost)\n1.283\n44.7%\n59.7%\n\n\n\nEvery step in the table is a real improvement: the 95% bootstrap interval for each difference, resampling whole games, excludes zero. The model beats the baseline for all 468 pitchers who threw 500+ pitches in 2026, and it’s well calibrated: when it says 40% slider, sliders come about 40% of the time."
+  },
+  {
+    "objectID": "index.html#what-makes-it-credible",
+    "href": "index.html#what-makes-it-credible",
+    "title": "Predicting the next pitch",
+    "section": "What makes it credible",
+    "text": "What makes it credible\n\nA hard baseline. Every model has to beat the pitcher’s own pitch mix, shrunk toward similar pitchers for thin samples, not a league-average strawman.\nA time split. Train on 2023-24, tune on 2025, test once on 2026. Never a random split, because the model’s job is predicting the future.\nA pre-registered test. The 2026 test plan, including the rule for which model the app uses, was committed to the repo before 2026 was scored. One idea I liked (a family-first model for relabeled pitches) looked good on 2025, failed on 2026, and was dropped.\nLeakage guards. Every field is tagged by when it becomes known. Pitcher mixes use only games before the one being predicted."
+  },
+  {
+    "objectID": "index.html#where-it-helps-most",
+    "href": "index.html#where-it-helps-most",
+    "title": "Predicting the next pitch",
+    "section": "Where it helps most",
+    "text": "Where it helps most\nThe model earns its keep where pitchers move furthest from their usual mix: hitter’s counts (3-0, 3-1, 2-0) and two-strike counts (0-2, 1-2). In the 2025 tuning season, after a swing-and-miss, pitchers threw the same pitch again 49% of the time, against 32% if you only knew their mix. The logistic model predicted 50%."
+  },
+  {
+    "objectID": "index.html#explore",
+    "href": "index.html#explore",
+    "title": "Predicting the next pitch",
+    "section": "Explore",
+    "text": "Explore\n\nLive matchup app: pick any pitcher and batter, set the situation, download the PDF\nSample advance report: Paul Skenes vs. Shohei Ohtani, as a printable two-page PDF\nMethods in plain language: every modeling choice and why\nFull results: calibration, per-pitcher results, where it fails\nData and cleaning: sources, every cleaning step, the data dictionary"
+  },
+  {
+    "objectID": "report.html",
+    "href": "report.html",
+    "title": "Sample advance report",
+    "section": "",
+    "text": "Download the printable PDF"
+  },
+  {
+    "objectID": "report.html#how-to-read-it",
+    "href": "report.html#how-to-read-it",
+    "title": "Sample advance report",
+    "section": "How to read it",
+    "text": "How to read it\n\nPredicted next pitch. The model’s probabilities for a chosen situation (here a 1-2 count, previous pitch unknown), shown only for pitches he actually throws to this side. The tick marks his usual mix against this side, so the gap between bar and tick is what the situation adds. When earlier pitches aren’t specified, the prediction averages over his likely previous pitches rather than pretending there weren’t any.\nMix by count. What he actually threw to left-handed hitters in each count in 2026, with the number of pitches on the right. Small cells are noisy.\nModel by count. The model’s fastball / breaking / offspeed split and two most likely pitches in each count. This is the family view a hitter prepares for.\nWhere his pitches go. Location density by pitch type, from the catcher’s view. Public data shows where the ball ended up, not where the catcher set up, so the shading blends where he aims with how often he misses.\nExpected outcomes by pitch type. xwOBA for the hitter against each of the pitcher’s pitch types (from pitchers of the same hand), and for the pitcher throwing them to this side, over 2025-26. Values are shrunk toward league average so small samples don’t mislead; the plate appearances are shown on each bar.\nArsenal and platoon splits. Velocity, movement, whiff and chase rates by pitch, and each player’s splits by handedness."
+  },
+  {
+    "objectID": "report.html#the-app",
+    "href": "report.html#the-app",
+    "title": "Sample advance report",
+    "section": "The app",
+    "text": "The app\nThe same report is a live Shiny app where you can pick any pitcher and batter, set the situation and download the PDF. Every panel in the app and the PDF comes from the same R functions, so they always agree."
+  }
+]
