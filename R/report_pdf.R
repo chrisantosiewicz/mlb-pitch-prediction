@@ -35,9 +35,9 @@ with_title <- function(body, title, extra = NULL) {
 
 text_panel <- function(lines, title = NULL, size = BASE + 0.5, bullet = TRUE, width = 105, extra = NULL) {
   wrapped <- vapply(lines, function(l) paste(strwrap(l, width = width), collapse = "\n   "), character(1))
-  label <- paste0(if (bullet) "•  " else "", wrapped, collapse = "\n\n")
+  label <- paste0(if (bullet) "•  " else "", wrapped, collapse = "\n")
   g <- grid::textGrob(label, x = 0.01, y = 0.98, hjust = 0, vjust = 1,
-                      gp = grid::gpar(fontsize = size, lineheight = 1.15, col = "#1d2733"))
+                      gp = grid::gpar(fontsize = size, lineheight = 1.3, col = "#1d2733"))
   with_title(g, title, extra)
 }
 

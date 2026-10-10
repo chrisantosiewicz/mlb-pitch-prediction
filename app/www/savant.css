@@ -86,3 +86,9 @@ body { color: var(--ink); background: #eef1f4; }
 .btn-primary:hover { background: #a30d26; border-color: #a30d26; }
 
 .app-footer { color: var(--muted); font-size: 0.75rem; padding: 0.6rem 0.2rem 1.2rem; }
+
+/* pitch locations: one panel per pitch, scroll sideways when they don't fit */
+.location-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+.location-scroll::-webkit-scrollbar { height: 10px; }
+.location-scroll::-webkit-scrollbar-thumb { background: #b9c3cf; border-radius: 5px; }
+.location-scroll::-webkit-scrollbar-track { background: #eef1f4; border-radius: 5px; }
