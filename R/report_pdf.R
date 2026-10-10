@@ -66,15 +66,23 @@ h2h_box <- function(h2h) {
     sprintf("%d H  ·  %d HR", h2h$H, h2h$HR),
     sprintf("%d K  ·  %d BB", h2h$K, h2h$BB),
     sprintf("xwOBA %s", h2h$xwOBA))
+  # Geometry in points: the title's midline sits exactly halfway between the
+  # top of the box and the top of the first stats line.
   n <- length(lines)
-  box_h <- grid::unit(3.2 + 1.5 * n, "lines")
+  body_size <- BASE + 1
+  line_pt <- body_size * 1.4
+  title_gap <- 48                      # box top -> top of first stats line
+  bottom_pad <- 14
+  box_pt <- title_gap + n * line_pt + bottom_pad
+  pt <- function(x) grid::unit(x, "pt")
+  top <- grid::unit(0.5, "npc") + pt(box_pt / 2)
   g <- grid::gTree(children = grid::gList(
-    grid::roundrectGrob(width = grid::unit(0.92, "npc"), height = box_h, r = grid::unit(4, "pt"),
+    grid::roundrectGrob(width = grid::unit(0.92, "npc"), height = pt(box_pt), r = pt(4),
                         gp = grid::gpar(fill = NAVY, col = NA)),
-    grid::textGrob("HEAD TO HEAD", y = grid::unit(0.5, "npc") + box_h * 0.5 - grid::unit(1.5, "lines"),
+    grid::textGrob("HEAD TO HEAD", y = top - pt(title_gap / 2), vjust = 0.5,
                    gp = grid::gpar(fontsize = BASE + 4, fontface = "bold", col = "white")),
-    grid::textGrob(paste(lines, collapse = "\n"), y = grid::unit(0.5, "npc") - grid::unit(0.9, "lines"),
-                   gp = grid::gpar(fontsize = BASE + 1, col = "white", lineheight = 1.4))))
+    grid::textGrob(paste(lines, collapse = "\n"), y = top - pt(title_gap), vjust = 1,
+                   gp = grid::gpar(fontsize = body_size, col = "white", lineheight = 1.4))))
   patchwork::wrap_elements(full = g)
 }
 
