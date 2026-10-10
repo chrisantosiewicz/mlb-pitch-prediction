@@ -39,3 +39,13 @@ test_that("the first pitch of an at-bat has no previous pitch", {
   combos <- expand_situation(toy_report_data(), 1L, 2L, DEFAULT_SITUATION)
   expect_equal(combos$prev1, "NONE")
 })
+
+test_that("predictions keep only his own pitches and still add to one", {
+  pred <- tibble::tibble(pitch_group = PITCH_GROUPS, model = c(0.5, 0.02, 0.01, 0.3, 0.02, 0.05, 0.1, 0),
+                         usual = rep(1 / 8, 8))
+  out <- restrict_to_repertoire(pred, c("FF", "SL", "CH"))
+  expect_equal(sum(out$model), 1)
+  expect_equal(sum(out$usual), 1)
+  expect_true(all(out$model[!out$pitch_group %in% c("FF", "SL", "CH")] == 0))
+  expect_equal(out$model[out$pitch_group == "FF"], 0.5 / 0.9)
+})

@@ -1,106 +1,263 @@
 # report_pdf.R ----------------------------------------------------------------
-# The printable one-page advance report (US letter, landscape). Built from the
-# same functions as the app (report.R), so the PDF and the app always agree.
-# Used by the app's "Download PDF" button and by the pipeline's sample report.
+# The printable advance report: two portrait pages in one PDF.
+#   Page 1 "The Game Plan": for any fan, readable in 30 seconds.
+#   Page 2 "The Detail":    everything an analyst wants.
+# Built from the same functions as the app (report.R, report_insights.R), so
+# the PDF and the app always agree.
 
-KEY_COUNTS <- c("0-0", "1-0", "0-1", "2-0", "1-1", "0-2", "3-1", "2-2", "3-2")
-PDF_BASE_SIZE <- 8.5
+NAVY <- "#0b2545"
+EDGE_COLORS <- c("Pitcher edge" = "#3661ad", "Even" = "#b4b4b4", "Hitter edge" = "#d82129",
+                 "Not enough data" = "#e9ecef")
+BASE <- 10   # base font size for the PDF (pt)
 
-# Model call for each key count, previous pitches unknown (averaged).
-key_count_table <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION) {
-  purrr::map_dfr(KEY_COUNTS, function(cnt) {
-    s <- utils::modifyList(situation, list(count = cnt, prev1 = "UNKNOWN", prev1_result = "UNKNOWN",
-                                           prev2 = "UNKNOWN"))
-    p <- predict_next_pitch(d, model, pitcher_id, batter_id, s)
-    fam <- tapply(p$model, PITCH_FAMILY[p$pitch_group], sum)
-    top <- p[order(-p$model), ][1:2, ]
-    tibble::tibble(Count = cnt, Fastball = pct(fam[["FB"]]), Breaking = pct(fam[["BR"]]),
-                   Offspeed = pct(fam[["OS"]]),
-                   `Most likely` = sprintf("%s %s", PITCH_GROUP_NAMES[top$pitch_group[1]], pct(top$model[1])),
-                   `Next` = sprintf("%s %s", PITCH_GROUP_NAMES[top$pitch_group[2]], pct(top$model[2])))
-  })
-}
-
-pdf_table <- function(df, title, base = PDF_BASE_SIZE) {
-  th <- gridExtra::ttheme_minimal(
-    base_size = base - 1, padding = grid::unit(c(3, 2.2), "mm"),
-    core = list(bg_params = list(fill = c("#f4f7fb", "white"), col = NA)),
-    colhead = list(fg_params = list(fontface = "bold", col = "#1b4f72")))
-  tg <- gridExtra::tableGrob(as.data.frame(df), rows = NULL, theme = th)
-  patchwork::wrap_elements(full = tg) +
-    ggplot2::labs(title = title) +
-    ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = base + 1.5, colour = "#1b4f72"))
-}
-
-pdf_panel <- function(p, title, base = PDF_BASE_SIZE) {
-  p + ggplot2::labs(title = title) +
-    ggplot2::theme_minimal(base_size = base) +
-    ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = base + 1.5, colour = "#1b4f72"),
-                   plot.caption = ggplot2::element_text(colour = "grey45", size = base - 2),
+section_theme <- function(base = BASE) {
+  ggplot2::theme_minimal(base_size = base) +
+    ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = base + 3, colour = NAVY),
+                   plot.subtitle = ggplot2::element_text(size = base, colour = "grey30"),
+                   plot.caption = ggplot2::element_text(size = base - 2, colour = "grey45", hjust = 0),
+                   plot.title.position = "plot", plot.caption.position = "plot",
                    panel.grid.minor = ggplot2::element_blank())
 }
 
-situation_text <- function(s) {
-  prev <- if (s$count == "0-0") "first pitch" else if (s$prev1 == "UNKNOWN") "previous pitch unknown"
-          else sprintf("after a %s (%s)", tolower(PITCH_GROUP_NAMES[[s$prev1]]),
-                       if (s$prev1_result == "UNKNOWN") "result unknown" else s$prev1_result)
-  sprintf("%s count, %s, %s out, runners: %s", s$count, prev, s$outs,
-          ifelse(s$base_state == "___", "none", gsub("_", "-", s$base_state)))
+titled <- function(p, title, subtitle = NULL, caption = ggplot2::waiver()) {
+  p + ggplot2::labs(title = title, subtitle = subtitle, caption = caption) + section_theme()
 }
 
-build_report_page <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION) {
+# Title drawn as part of the grob, so it can never overlap the body.
+with_title <- function(body, title, extra = NULL) {
+  top <- if (is.null(title)) NULL else
+    grid::textGrob(title, x = 0, hjust = 0, gp = grid::gpar(fontsize = BASE + 3, fontface = "bold", col = NAVY))
+  bottom <- if (is.null(extra)) NULL else
+    grid::textGrob(extra, x = 0, hjust = 0, gp = grid::gpar(fontsize = BASE - 2, col = "grey45"))
+  patchwork::wrap_elements(full = gridExtra::arrangeGrob(body, top = top, bottom = bottom,
+                                                         padding = grid::unit(0.6, "line")))
+}
+
+text_panel <- function(lines, title = NULL, size = BASE + 0.5, bullet = TRUE, width = 105, extra = NULL) {
+  wrapped <- vapply(lines, function(l) paste(strwrap(l, width = width), collapse = "\n   "), character(1))
+  label <- paste0(if (bullet) "•  " else "", wrapped, collapse = "\n\n")
+  g <- grid::textGrob(label, x = 0.01, y = 0.98, hjust = 0, vjust = 1,
+                      gp = grid::gpar(fontsize = size, lineheight = 1.15, col = "#1d2733"))
+  with_title(g, title, extra)
+}
+
+table_panel <- function(df, title, size = BASE - 1) {
+  th <- gridExtra::ttheme_minimal(
+    base_size = size, padding = grid::unit(c(3.2, 2), "mm"),
+    core = list(bg_params = list(fill = c("#f4f7fb", "white"), col = NA)),
+    colhead = list(fg_params = list(fontface = "bold", col = NAVY)))
+  tg <- gridExtra::tableGrob(as.data.frame(df), rows = NULL, theme = th)
+  tg$vp <- grid::viewport(x = 0, just = "left")   # left-align under the title
+  with_title(tg, title)
+}
+
+# ---- page 1 pieces ----
+
+plot_situations <- function(sm) {
+  sm <- dplyr::mutate(sm,
+    situation = factor(situation, levels = rev(names(SITUATIONS))),
+    family = factor(family, levels = rev(PITCH_FAMILIES)),
+    label = ifelse(!is.na(share) & share >= 0.08, pct(share), ""))
+  side <- dplyr::distinct(sm, situation, total, top_pitch, top_share) |>
+    dplyr::mutate(note = ifelse(total < MIN_SITUATION_PITCHES, "Small sample",
+                                sprintf("Top pitch:\n%s %s", PITCH_GROUP_NAMES[top_pitch], pct(top_share))))
+  sizes <- stats::setNames(sprintf("%s\n%d pitches", side$situation, side$total), side$situation)
+  ggplot2::ggplot(sm, ggplot2::aes(share, situation, fill = family)) +
+    ggplot2::geom_col(width = 0.62) +
+    ggplot2::geom_text(ggplot2::aes(label = label), position = ggplot2::position_stack(vjust = 0.5),
+                       colour = "white", size = 3.4, fontface = "bold") +
+    ggplot2::geom_text(data = side, ggplot2::aes(x = 1.02, y = situation, label = note), inherit.aes = FALSE,
+                       hjust = 0, size = 3, colour = "grey30") +
+    ggplot2::scale_fill_manual(values = FAMILY_COLORS, labels = PITCH_FAMILY_NAMES,
+                               breaks = PITCH_FAMILIES) +
+    ggplot2::scale_x_continuous(limits = c(0, 1.55), breaks = NULL, expand = c(0, 0)) +
+    ggplot2::scale_y_discrete(labels = sizes) +
+    ggplot2::labs(x = NULL, y = NULL, fill = NULL) +
+    ggplot2::theme(legend.position = "top", legend.justification = "left", panel.grid = ggplot2::element_blank())
+}
+
+plot_edges <- function(edges) {
+  df <- edges |>
+    dplyr::mutate(pitch = factor(PITCH_GROUP_NAMES[pitch_group], levels = rev(PITCH_GROUP_NAMES[pitch_group])),
+                  edge = factor(edge, levels = names(EDGE_COLORS)),
+                  edge_label = ifelse(edge == "Not enough data", "Not enough data yet",
+                                      sprintf("%s: projected %s vs. %s avg", edge, woba_fmt(projected),
+                                              woba_fmt(league_xwoba))),
+                  facts = sprintf("%s of pitches  ·  %.1f mph", pct(usage), velo))
+  ggplot2::ggplot(df, ggplot2::aes(y = pitch)) +
+    ggplot2::geom_point(ggplot2::aes(x = 0, colour = pitch_group), size = 4.5) +
+    ggplot2::geom_text(ggplot2::aes(x = 0.15, label = pitch), hjust = 0, fontface = "bold", size = 3.6) +
+    ggplot2::geom_text(ggplot2::aes(x = 1.45, label = facts), hjust = 0, size = 3.3, colour = "grey30") +
+    ggplot2::geom_tile(ggplot2::aes(x = 4.15, fill = edge), width = 2.5, height = 0.78) +
+    ggplot2::geom_text(ggplot2::aes(x = 4.15, label = edge_label,
+                                    colour = I(ifelse(edge %in% c("Even", "Not enough data"), "#1d2733", "white"))),
+                       size = 3.1) +
+    ggplot2::scale_colour_manual(values = PITCH_COLORS, guide = "none") +
+    ggplot2::scale_fill_manual(values = EDGE_COLORS, guide = "none", drop = FALSE) +
+    ggplot2::scale_x_continuous(limits = c(-0.2, 5.45), expand = c(0, 0)) +
+    ggplot2::labs(x = NULL, y = NULL) +
+    ggplot2::theme_void(base_size = BASE)
+}
+
+# ---- page 2 pieces ----
+
+plot_percentiles <- function(rows) {
+  if (!nrow(rows)) return(ggplot2::ggplot() + ggplot2::annotate("text", x = 0, y = 0, size = 3.2,
+                                                                label = "Not enough PA for percentile rankings") +
+                            ggplot2::theme_void())
+  rows <- dplyr::mutate(rows, metric = factor(metric, levels = rev(metric)), col = percentile_color(pctl))
+  ggplot2::ggplot(rows, ggplot2::aes(y = metric)) +
+    ggplot2::geom_segment(ggplot2::aes(x = 0, xend = 100, yend = metric), colour = "#e3e7ec", linewidth = 2.2,
+                          lineend = "round") +
+    ggplot2::geom_segment(ggplot2::aes(x = 0, xend = pctl, yend = metric, colour = I(col)), linewidth = 2.2,
+                          alpha = 0.55, lineend = "round") +
+    ggplot2::geom_point(ggplot2::aes(x = pctl, fill = I(col)), shape = 21, colour = "white", size = 6.5, stroke = 1) +
+    ggplot2::geom_text(ggplot2::aes(x = pctl, label = pctl), colour = "white", size = 2.6, fontface = "bold") +
+    ggplot2::geom_text(ggplot2::aes(x = 108, label = value), hjust = 0, size = 3, colour = "grey30") +
+    ggplot2::scale_x_continuous(limits = c(-4, 125), breaks = NULL) +
+    ggplot2::labs(x = NULL, y = NULL) +
+    ggplot2::theme_minimal(base_size = BASE) +
+    ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.text.y = ggplot2::element_text(face = "bold"))
+}
+
+plot_model_by_count <- function(probs) {
+  df <- probs |>
+    dplyr::mutate(family = factor(PITCH_FAMILY[pitch_group], levels = rev(PITCH_FAMILIES))) |>
+    dplyr::group_by(count, family) |>
+    dplyr::summarise(p = sum(model), .groups = "drop") |>
+    dplyr::mutate(count = factor(count, levels = rev(KEY_COUNTS)))
+  ggplot2::ggplot(df, ggplot2::aes(p, count, fill = family)) +
+    ggplot2::geom_col(width = 0.7) +
+    ggplot2::geom_text(ggplot2::aes(label = ifelse(p >= 0.1, pct(p), "")),
+                       position = ggplot2::position_stack(vjust = 0.5), colour = "white", size = 2.8) +
+    ggplot2::scale_fill_manual(values = FAMILY_COLORS, labels = PITCH_FAMILY_NAMES, breaks = PITCH_FAMILIES) +
+    ggplot2::scale_x_continuous(labels = scales::percent, expand = c(0, 0)) +
+    ggplot2::labs(x = NULL, y = "Count", fill = NULL) +
+    ggplot2::theme(legend.position = "top", legend.justification = "left",
+                   panel.grid.major.y = ggplot2::element_blank())
+}
+
+GLOSSARY <- c(
+  "xwOBA: damage a hitter does, from quality of contact, walks and strikeouts (league about .320, elite .400). Whiff%: misses per swing. Chase%: swings at pitches outside the zone. Break: movement in inches vs. a spinless pitch. Percentiles: vs. all players with 150+ PA in 2025-26; red = better.",
+  "The model: gradient boosting trained on 2023-25 Statcast, tested once on all of 2026. It starts from the pitcher's own mix and learns how count, previous pitches and matchup shift it. When it says 40%, that pitch came about 40% of the time in testing. Probabilities, not certainties."
+)
+
+situation_text <- function(s) {
+  prev <- if (s$count == "0-0") "first pitch of the at-bat" else if (s$prev1 == "UNKNOWN") "earlier pitches unknown"
+          else sprintf("after a %s (%s)", tolower(PITCH_GROUP_NAMES[[s$prev1]]),
+                       if (s$prev1_result == "UNKNOWN") "result unknown" else RESULT_TEXT[[s$prev1_result]])
+  sprintf("%s count, %s", s$count, prev)
+}
+RESULT_TEXT <- c(ball = "ball", called = "called strike", whiff = "swing and miss", foul = "foul")
+
+# ---- pages ----
+
+build_page1 <- function(d, model, pitcher_id, batter_id, situation, first_pitch) {
   m <- matchup(d, pitcher_id, batter_id)
   pred <- predict_next_pitch(d, model, pitcher_id, batter_id, situation)
+  fam <- tapply(pred$model, PITCH_FAMILY[pred$pitch_group], sum)
   h2h <- head_to_head_summary(d, pitcher_id, batter_id)
-  flags <- c(if (isTRUE(m$flags$mix_changed)) "MIX CHANGED THIS SEASON",
-             if (isTRUE(m$flags$relabeled)) "PITCH RELABEL REPAIRED")
+  flags <- c(if (isTRUE(m$flags$mix_changed)) "His pitch mix has changed a lot this season.",
+             if (isTRUE(m$flags$relabeled)) "One of his pitches was relabeled by Statcast this season.")
+  h2h_line <- if (is.null(h2h)) "No head-to-head history." else
+    sprintf("Head to head (%s): %d PA, %d H, %d HR, %d K, %d BB.", h2h$Seasons, h2h$PA, h2h$H, h2h$HR, h2h$K, h2h$BB)
 
-  title <- sprintf("ADVANCE REPORT  |  %s (%sHP, %s)  vs.  %s (bats %s, %s)",
-                   toupper(m$pitcher$full_name), m$p_throws, m$pitcher$team,
-                   toupper(m$batter$full_name), m$batter$bat_side, m$batter$team)
-  subtitle <- paste0(
-    sprintf("Statcast through %s  ·  mix & locations %s  ·  xwOBA %s  ·  ", d$meta$data_through,
-            d$meta$report_season, paste(range(unlist(d$meta$outcome_seasons)), collapse = "-")),
-    if (is.null(h2h)) "No head-to-head history"
-    else sprintf("Head to head %s: %d PA, %d H, %d HR, %d K, %d BB, xwOBA %s",
-                 h2h$Seasons, h2h$PA, h2h$H, h2h$HR, h2h$K, h2h$BB, h2h$xwOBA),
-    if (length(flags)) paste0("  ·  ", paste(flags, collapse = "  ·  ")) else "")
-
-  pred_panel <- pdf_panel(plot_prediction(pred, text_size = 2.6), "Predicted next pitch") +
-    ggplot2::labs(subtitle = situation_text(situation)) +
-    ggplot2::theme(plot.subtitle = ggplot2::element_text(size = PDF_BASE_SIZE - 1, colour = "grey30"))
-  mix_panel <- pdf_panel(plot_count_mix(d, pitcher_id, m$stand, text_size = 2.4),
-                         sprintf("Mix by count vs. %sHB", m$stand)) +
-    ggplot2::theme(panel.grid = ggplot2::element_blank())
-  key_panel <- pdf_table(key_count_table(d, model, pitcher_id, batter_id, situation), "Model by count")
-  loc_panel <- pdf_panel(plot_locations(d, pitcher_id, m$stand, "All counts", max_types = 5),
-                         "Where his pitches go (catcher's view)") +
+  keys <- text_panel(c(key_takeaways(d, pitcher_id, batter_id, first_pitch), flags),
+                     title = "Three things to know", extra = h2h_line)
+  pred_panel <- titled(plot_prediction(pred, text_size = 3.3), sprintf("If it's %s...", situation$count),
+                       subtitle = sprintf("Fastball %s · Breaking %s · Offspeed %s", pct(fam[["FB"]]),
+                                          pct(fam[["BR"]]), pct(fam[["OS"]])),
+                       caption = paste0(situation_text(situation),
+                                        ". Bar = model; tick = his usual mix vs. this side.")) +
+    ggplot2::theme(panel.grid.major.y = ggplot2::element_blank())
+  sit_panel <- titled(plot_situations(situation_mix(d, pitcher_id, m$stand)), "What he throws when...",
+                      subtitle = sprintf("2026, vs. %s", hand_word(m$stand))) +
+    ggplot2::theme(legend.position = "top", legend.justification = "left", panel.grid = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_text(face = "bold", size = BASE))
+  edge_panel <- titled(plot_edges(pitch_edges(d, pitcher_id, batter_id)), "Pitch-by-pitch edge",
+                       subtitle = sprintf("Combines how %s hits each pitch type and how %s's version of it performs (2025-26 xwOBA)",
+                                          sub(".* ", "", m$batter$full_name), sub(".* ", "", m$pitcher$full_name))) +
+    ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.text = ggplot2::element_blank())
+  loc_panel <- titled(plot_locations(d, pitcher_id, m$stand, "All counts", max_types = 3),
+                      "Where his top three pitches go",
+                      caption = "Catcher's view. Darker = more pitches. Public data shows where the ball ended up, not where the catcher set up.") +
     ggplot2::theme(axis.text = ggplot2::element_blank(), panel.grid = ggplot2::element_blank(),
-                   strip.text = ggplot2::element_text(face = "bold", size = PDF_BASE_SIZE))
-  xw_panel <- pdf_panel(plot_xwoba_by_pitch(d, pitcher_id, batter_id, text_size = 2.3),
-                        "Expected outcomes by pitch type") +
-    ggplot2::theme(legend.position = "top", panel.grid.major.y = ggplot2::element_blank())
-  ars_panel <- pdf_table(arsenal_table(d, pitcher_id, m$stand), sprintf("Arsenal vs. %sHB", m$stand))
-  plat_panel <- pdf_table(platoon_table(d, pitcher_id, batter_id), "Platoon splits")
+                   strip.text = ggplot2::element_text(face = "bold", size = BASE))
 
-  layout <- "
-AAABBBBCCCC
-DDDDDDDDDDD
-EEEEFFFFGGG"
-  patchwork::wrap_plots(A = pred_panel, B = mix_panel, C = key_panel, D = loc_panel,
-                        E = xw_panel, F = ars_panel, G = plat_panel, design = layout,
-                        heights = c(1.15, 0.8, 1)) +
+  design <- "
+AA
+BC
+DD
+EE"
+  patchwork::wrap_plots(A = keys, B = pred_panel, C = sit_panel, D = edge_panel, E = loc_panel,
+                        design = design, heights = c(0.95, 1.2, 0.95, 1.15)) +
     patchwork::plot_annotation(
-      title = title, subtitle = subtitle,
-      caption = "Next-pitch model: xgboost on 2023-25 Statcast, tested once on 2026 (log loss 1.283 vs. 1.580 for the pitcher's prior mix). Probabilities, not certainties.",
-      theme = ggplot2::theme(
-        plot.title = ggplot2::element_text(face = "bold", size = 13, colour = "#1b4f72"),
-        plot.subtitle = ggplot2::element_text(size = 8, colour = "grey30"),
-        plot.caption = ggplot2::element_text(size = 6.5, colour = "grey45")))
+      title = sprintf("%s  vs.  %s", m$pitcher$full_name, m$batter$full_name),
+      subtitle = sprintf("THE GAME PLAN  ·  %sHP, %s  vs.  bats %s, %s  ·  Statcast through %s",
+                         m$p_throws, m$pitcher$team, m$batter$bat_side, m$batter$team, d$meta$data_through),
+      theme = ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = 22, colour = NAVY),
+                             plot.subtitle = ggplot2::element_text(size = BASE, colour = "#c8102e", face = "bold")))
+}
+
+build_page2 <- function(d, model, pitcher_id, batter_id, situation, probs) {
+  m <- matchup(d, pitcher_id, batter_id)
+  pc <- percentile_rankings(d)
+  p_pct <- titled(plot_percentiles(dplyr::filter(pc$pitcher, player_id == pitcher_id)),
+                  paste(m$pitcher$full_name, "percentiles"))
+  b_pct <- titled(plot_percentiles(dplyr::filter(pc$batter, player_id == batter_id)),
+                  paste(m$batter$full_name, "percentiles"))
+  mix_panel <- titled(plot_count_mix(d, pitcher_id, m$stand, text_size = 2.5, min_n = 30),
+                      sprintf("Actual mix by count vs. %sHB, 2026", m$stand),
+                      caption = "Faded rows: fewer than 30 pitches. Right column: pitches in that count.") +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(size = BASE - 2.5)) +
+    ggplot2::theme(panel.grid = ggplot2::element_blank())
+  model_panel <- titled(plot_model_by_count(probs), "Model by count",
+                        caption = "Earlier pitches unknown, averaged over his usual mix.")
+  loc_panel <- titled(plot_locations(d, pitcher_id, m$stand, "All counts", max_types = 6, short_labels = TRUE),
+                      "All pitch locations", caption = NULL) +
+    ggplot2::theme(axis.text = ggplot2::element_blank(), panel.grid = ggplot2::element_blank(),
+                   strip.text = ggplot2::element_text(face = "bold", size = BASE - 1.5))
+  xw_panel <- titled(plot_xwoba_by_pitch(d, pitcher_id, batter_id, text_size = 2.7, compact = TRUE),
+                     "Expected outcomes by pitch type") +
+    ggplot2::theme(legend.position = "right", panel.grid.major.y = ggplot2::element_blank(),
+                   legend.text = ggplot2::element_text(size = BASE - 1))
+  ars <- arsenal_table(d, pitcher_id, m$stand) |>
+    dplyr::rename(`H-brk (in)` = `H-brk"`, `V-brk (in)` = `V-brk"`)
+  ars_panel <- table_panel(ars, sprintf("Arsenal vs. %sHB", m$stand), size = BASE - 2)
+  plat_panel <- table_panel(platoon_table(d, pitcher_id, batter_id), "Platoon splits (2025-26)", size = BASE - 2)
+  gloss <- text_panel(GLOSSARY, title = "How to read this", size = BASE - 2.5, width = 150)
+
+  design <- "
+AB
+CD
+EE
+FF
+GG
+HH
+II"
+  patchwork::wrap_plots(A = p_pct, B = b_pct, C = mix_panel, D = model_panel, E = loc_panel, F = xw_panel,
+                        G = ars_panel, H = plat_panel, I = gloss, design = design,
+                        heights = c(1.1, 1.7, 0.9, 1.65, 1.4, 1.1, 1.0)) +
+    patchwork::plot_annotation(
+      title = "THE DETAIL",
+      subtitle = sprintf("%s vs. %s  ·  pitch mix and locations: 2026  ·  outcomes: 2025-26",
+                         m$pitcher$full_name, m$batter$full_name),
+      theme = ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = 16, colour = "#c8102e"),
+                             plot.subtitle = ggplot2::element_text(size = BASE, colour = "grey30")))
+}
+
+build_report_pages <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION) {
+  probs <- key_count_probs(d, model, pitcher_id, batter_id, situation)
+  first_pitch <- dplyr::filter(probs, count == "0-0")
+  list(page1 = build_page1(d, model, pitcher_id, batter_id, situation, first_pitch),
+       page2 = build_page2(d, model, pitcher_id, batter_id, situation, probs))
 }
 
 render_report_pdf <- function(d, model, pitcher_id, batter_id, file, situation = DEFAULT_SITUATION) {
-  page <- build_report_page(d, model, pitcher_id, batter_id, situation)
-  ggplot2::ggsave(file, page, width = 11, height = 8.5, device = grDevices::cairo_pdf)
+  pages <- build_report_pages(d, model, pitcher_id, batter_id, situation)
+  grDevices::cairo_pdf(file, width = 8.5, height = 11, onefile = TRUE)
+  on.exit(grDevices::dev.off())
+  print(pages$page1)
+  print(pages$page2)
   invisible(file)
 }

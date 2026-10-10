@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(ggplot2)
 })
-for (f in c("constants", "features", "boost_model", "report", "report_pdf")) source(file.path("lib", paste0(f, ".R")))
+for (f in c("constants", "features", "boost_model", "report", "report_insights", "report_pdf")) source(file.path("lib", paste0(f, ".R")))
 
 d <- load_report_data("data")
 model <- xgboost::xgb.load("models/final_xgboost.ubj")

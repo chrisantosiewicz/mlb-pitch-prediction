@@ -78,12 +78,14 @@ count_mix_table <- function(d, pitcher_id, stand, family = FALSE) {
                   pitch_group = factor(pitch_group, levels = levels_used))
 }
 
-plot_count_mix <- function(d, pitcher_id, stand, family = FALSE, text_size = 3.2) {
-  df <- count_mix_table(d, pitcher_id, stand, family)
+plot_count_mix <- function(d, pitcher_id, stand, family = FALSE, text_size = 3.2, min_n = 0) {
+  df <- count_mix_table(d, pitcher_id, stand, family) |>
+    dplyr::mutate(thin = total < min_n)   # counts with few pitches are faded
   labels <- if (family) PITCH_FAMILY_NAMES else PITCH_SHORT_NAMES
   totals <- dplyr::distinct(df, count_str, total)
   ggplot2::ggplot(df, ggplot2::aes(pitch_group, count_str, fill = share)) +
-    ggplot2::geom_tile(colour = "white", linewidth = 0.6) +
+    ggplot2::geom_tile(ggplot2::aes(alpha = thin), colour = "white", linewidth = 0.6) +
+    ggplot2::scale_alpha_manual(values = c(`FALSE` = 1, `TRUE` = 0.35), guide = "none") +
     ggplot2::geom_text(ggplot2::aes(label = ifelse(is.na(share) | share < 0.005, "", pct(share))), size = text_size) +
     ggplot2::geom_text(data = totals, ggplot2::aes(x = length(levels(df$pitch_group)) + 0.75, y = count_str,
                                                    label = total), inherit.aes = FALSE, size = text_size * 0.85,
@@ -98,7 +100,7 @@ plot_count_mix <- function(d, pitcher_id, stand, family = FALSE, text_size = 3.2
 
 # ---- location density ----
 
-plot_locations <- function(d, pitcher_id, stand, bucket = "All counts", max_types = 4) {
+plot_locations <- function(d, pitcher_id, stand, bucket = "All counts", max_types = 4, short_labels = FALSE) {
   groups <- utils::head(shown_groups(d, pitcher_id, stand), max_types)
   counts <- COUNT_BUCKETS[[bucket]]
   df <- d$locations |>
@@ -106,7 +108,8 @@ plot_locations <- function(d, pitcher_id, stand, bucket = "All counts", max_type
     dplyr::mutate(count_str = paste0(balls, "-", strikes))
   if (!is.null(counts)) df <- dplyr::filter(df, count_str %in% counts)
   n_lab <- dplyr::count(df, pitch_group) |>
-    dplyr::mutate(label = paste0(PITCH_GROUP_NAMES[pitch_group], " (", n, ")"))
+    dplyr::mutate(label = if (short_labels) paste0(PITCH_SHORT_NAMES[pitch_group], "\n", n, " pitches")
+                          else paste0(PITCH_GROUP_NAMES[pitch_group], " (", n, ")"))
   df <- dplyr::left_join(df, n_lab, by = "pitch_group") |>
     dplyr::mutate(label = factor(label, levels = n_lab$label[match(groups, n_lab$pitch_group)]))
   dense <- dplyr::group_by(df, label) |> dplyr::filter(dplyr::n() >= 15) |> dplyr::ungroup()
@@ -175,28 +178,39 @@ xwoba_by_pitch <- function(d, pitcher_id, batter_id) {
       dplyr::transmute(pitch_group, who = who, xwoba = xwoba_shrunk, pa, league_xwoba)
   }
   dplyr::bind_rows(
-    get("batter", batter_id, m$p_throws, sprintf("%s vs. %sHP", m$batter$full_name, m$p_throws)),
-    get("pitcher", pitcher_id, m$stand, sprintf("%s vs. %sHB", m$pitcher$full_name, m$stand))
+    get("batter", batter_id, m$p_throws, sprintf("%s vs. %sHP", sub(".* ", "", m$batter$full_name), m$p_throws)),
+    get("pitcher", pitcher_id, m$stand, sprintf("%s vs. %sHB", sub(".* ", "", m$pitcher$full_name), m$stand))
   ) |>
     dplyr::mutate(pitch_group = factor(pitch_group, levels = rev(groups)))
 }
 
-plot_xwoba_by_pitch <- function(d, pitcher_id, batter_id, text_size = 3) {
+# compact = TRUE (the PDF) moves the PA counts into the axis labels so the
+# value labels have room.
+plot_xwoba_by_pitch <- function(d, pitcher_id, batter_id, text_size = 3, compact = FALSE) {
   df <- xwoba_by_pitch(d, pitcher_id, batter_id)
   league <- dplyr::distinct(df, pitch_group, league_xwoba) |> dplyr::group_by(pitch_group) |>
     dplyr::summarise(league_xwoba = mean(league_xwoba), .groups = "drop")
+  pa_by_group <- df |>
+    dplyr::group_by(pitch_group) |>
+    dplyr::summarise(pa = paste(pa, collapse = " / "), .groups = "drop")
+  y_labels <- if (compact) {
+    stats::setNames(sprintf("%s (%s)", PITCH_GROUP_NAMES[as.character(pa_by_group$pitch_group)], pa_by_group$pa),
+                    as.character(pa_by_group$pitch_group))
+  } else PITCH_GROUP_NAMES
+  value_label <- if (compact) woba_fmt(df$xwoba) else paste0(woba_fmt(df$xwoba), "  (", df$pa, " PA)")
   ggplot2::ggplot(df, ggplot2::aes(xwoba, pitch_group, fill = who)) +
-    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.75), width = 0.7) +
-    ggplot2::geom_text(ggplot2::aes(label = paste0(woba_fmt(xwoba), "  (", pa, " PA)")),
-                       position = ggplot2::position_dodge(width = 0.75), hjust = -0.1, size = text_size) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.75) +
+    ggplot2::geom_text(ggplot2::aes(label = value_label),
+                       position = ggplot2::position_dodge(width = 0.8), hjust = -0.15, size = text_size) +
     ggplot2::geom_point(data = league, ggplot2::aes(league_xwoba, pitch_group), inherit.aes = FALSE,
                         shape = 124, size = 6, colour = "grey30") +
-    ggplot2::scale_y_discrete(labels = PITCH_GROUP_NAMES) +
+    ggplot2::scale_y_discrete(labels = y_labels) +
     ggplot2::scale_x_continuous(limits = c(0, 0.7), breaks = seq(0, 0.5, 0.1), labels = woba_fmt, expand = c(0, 0)) +
     ggplot2::scale_fill_manual(values = c("#1b6ca8", "#d1495b")) +
     ggplot2::labs(x = "xwOBA (shrunk toward league)", y = NULL, fill = NULL,
-                  caption = sprintf("%s. Black tick = league average for that pitch and matchup.",
-                                    paste(range(unlist(d$meta$outcome_seasons)), collapse = "-"))) +
+                  caption = sprintf("%s. Black tick = league average for that pitch and matchup.%s",
+                                    paste(range(unlist(d$meta$outcome_seasons)), collapse = "-"),
+                                    if (compact) " In parentheses: plate appearances (hitter / pitcher)." else "")) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(legend.position = "top", panel.grid.major.y = ggplot2::element_blank(),
                    plot.caption = ggplot2::element_text(colour = "grey45"))
@@ -287,21 +301,39 @@ expand_situation <- function(d, pitcher_id, batter_id, s) {
 
 predict_next_pitch <- function(d, model, pitcher_id, batter_id, situation = DEFAULT_SITUATION) {
   combos <- expand_situation(d, pitcher_id, batter_id, situation)
-  rows <- purrr::pmap_dfr(combos, function(prev1, prev1_result, prev2, w) {
-    situation_row(d, pitcher_id, batter_id,
-                  utils::modifyList(situation, list(prev1 = prev1, prev1_result = prev1_result, prev2 = prev2)))
-  })
-  rows <- prepare_factors(rows)
+  # Build the situation once, then vary only the previous-pitch columns.
+  base <- situation_row(d, pitcher_id, batter_id,
+                        utils::modifyList(situation, list(prev1 = combos$prev1[1],
+                                                          prev1_result = combos$prev1_result[1],
+                                                          prev2 = combos$prev2[1])))
+  rows <- base[rep(1, nrow(combos)), ]
+  rows$prev1_group <- combos$prev1
+  rows$prev1_result <- combos$prev1_result
+  rows$prev2_group <- combos$prev2
+  rows <- prepare_factors(dplyr::mutate(rows, dplyr::across(c(prev1_group, prev1_result, prev2_group), as.character)))
   p3 <- as.matrix(rows[paste0("p3_", PITCH_GROUPS)])
   offset <- log(p3) + as.matrix(rows[paste0("badj_", PITCH_GROUPS)])
   p <- predict_boost(model, boost_dmatrix(rows, offset))
   w <- combos$w / sum(combos$w)
-  tibble::tibble(pitch_group = PITCH_GROUPS, model = as.numeric(colSums(p * w)), usual = as.numeric(p3[1, ]))
+  out <- tibble::tibble(pitch_group = PITCH_GROUPS, model = as.numeric(colSums(p * w)), usual = as.numeric(p3[1, ]))
+  restrict_to_repertoire(out, shown_groups(d, pitcher_id, matchup(d, pitcher_id, batter_id)$stand))
+}
+
+# The report shows only pitches he actually throws to this side (2%+ usage).
+# The model keeps a sliver of probability on everything else (shrinkage);
+# that sliver is removed and the rest rescaled so his own pitches add to 100%.
+restrict_to_repertoire <- function(pred, repertoire) {
+  if (!length(repertoire)) return(pred)
+  pred |>
+    dplyr::mutate(keep = pitch_group %in% repertoire,
+                  model = ifelse(keep, model, 0) / sum(model[keep]),
+                  usual = ifelse(keep, usual, 0) / sum(usual[keep])) |>
+    dplyr::select(-keep)
 }
 
 plot_prediction <- function(pred, min_prob = 0.01, text_size = 3.6) {
   df <- pred |>
-    dplyr::filter(model >= min_prob | usual >= min_prob) |>
+    dplyr::filter(model > 0 | usual > 0) |>   # only his own pitches (see restrict_to_repertoire)
     dplyr::mutate(pitch_group = factor(pitch_group, levels = pitch_group[order(model)]))
   ggplot2::ggplot(df, ggplot2::aes(model, pitch_group, fill = pitch_group)) +
     ggplot2::geom_col(width = 0.65) +

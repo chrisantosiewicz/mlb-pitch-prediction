@@ -5,11 +5,13 @@ subtitle: "Paul Skenes vs. Shohei Ohtani"
 
 [Download the printable PDF](files/sample_skenes_ohtani.pdf){.btn .btn-primary}
 
-![](figures/sample_report.png){fig-alt="One-page advance report for Paul Skenes vs. Shohei Ohtani"}
+![](figures/sample_report_p1.png){fig-alt="Page 1, The Game Plan: Paul Skenes vs. Shohei Ohtani"}
+
+![](figures/sample_report_p2.png){fig-alt="Page 2, The Detail: Paul Skenes vs. Shohei Ohtani"}
 
 ## How to read it
 
-- **Predicted next pitch.** The model's probabilities for a chosen situation (here a 1-2 count, previous pitch unknown). The tick marks his usual mix against this side, so the gap between bar and tick is what the situation adds. When earlier pitches aren't specified, the prediction averages over his likely previous pitches rather than pretending there weren't any.
+- **Predicted next pitch.** The model's probabilities for a chosen situation (here a 1-2 count, previous pitch unknown), shown only for pitches he actually throws to this side. The tick marks his usual mix against this side, so the gap between bar and tick is what the situation adds. When earlier pitches aren't specified, the prediction averages over his likely previous pitches rather than pretending there weren't any.
 - **Mix by count.** What he actually threw to left-handed hitters in each count in 2026, with the number of pitches on the right. Small cells are noisy.
 - **Model by count.** The model's fastball / breaking / offspeed split and two most likely pitches in each count. This is the family view a hitter prepares for.
 - **Where his pitches go.** Location density by pitch type, from the catcher's view. Public data shows where the ball ended up, not where the catcher set up, so the shading blends where he aims with how often he misses.
