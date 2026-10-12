@@ -78,3 +78,12 @@ Every modeling and data choice, with the plain-language reason. This doubles as 
 | Two-page portrait PDF: "The Game Plan" + "The Detail" (Chris, 2026-10-10) | Page 1 is readable by any fan in 30 seconds (three plain takeaways, prediction, three count situations, a pitch-by-pitch edge strip, top three location maps). Page 2 keeps the analyst detail. Portrait because both pages stack top to bottom and most people will open it on a phone. |
 | Pitch-by-pitch edge uses both sides | Projected xwOBA = league + hitter's gap + pitcher's gap for that pitch type, so an elite hitter can still lose a pitch to an elite version of it. |
 | Predictions show only the pitcher's own pitches (Chris, 2026-10-10) | The model keeps a sliver of probability on pitches he doesn't throw (from shrinkage). The report drops pitches under 2% usage to this side and rescales his own to 100%. |
+
+## Post-test improvement: in-game adaptation (2026-10-11)
+
+| Choice | Why |
+|---|---|
+| In-game mix layer, tau_game = 35 tuned on 2025 | After the Game 5 live test (starters leaning on curveballs more than their usual mix), the pitcher's mix is updated with what he has thrown earlier in the same game. By about 35 pitches today's evidence weighs as much as his usual mix. Only earlier pitches in the game are used. |
+| "Today vs. usual" tilt features (whole game and last 15 pitches) | Lets the trees tell a real game plan from a short streak. |
+| Evaluated on 2025 and on the two postseason games, 2026 labeled post-hoc | The 2026 season was already scored once under the pre-registered plan, so the in-game model's 2026 numbers are a post-hoc check, not a new headline. |
+| Live tracker uses the in-game model; the app keeps the original | The app scores a single situation with no game history, so the in-game layer has nothing to adapt to there. |

@@ -9,6 +9,7 @@
 # the time each prediction was made, before the pitch appeared in the feed.
 
 FEED_URL <- "https://statsapi.mlb.com/api/v1.1/game/%s/feed/live"
+INGAME_RECENT_WINDOW <- 15   # matches pipeline/16_ingame.R
 
 fetch_feed <- function(game_pk) jsonlite::fromJSON(sprintf(FEED_URL, game_pk), simplifyVector = FALSE)
 
@@ -45,7 +46,7 @@ inning_bucket <- function(i) if (i <= 3) "1-3" else if (i <= 6) "4-6" else if (i
 game_pitches <- function(feed) {
   plays <- feed$liveData$plays$allPlays
   bases <- character(); outs <- 0L; half <- ""; away <- 0L; home <- 0L
-  starters <- list(); pitcher_pitches <- list(); faced <- list()
+  starters <- list(); pitcher_pitches <- list(); faced <- list(); thrown <- list()
   rows <- list()
   for (p in plays) {
     this_half <- paste(p$about$inning, p$about$halfInning)
@@ -76,6 +77,14 @@ game_pitches <- function(feed) {
         prev1 = if (is.null(p1)) "NONE" else p1$group, prev1_result = if (is.null(p1)) "none" else p1$result,
         prev2 = if (is.null(p2)) "NONE" else p2$group,
         actual_code = code, actual = if (is.na(code)) NA_character_ else pitch_group_of(code))
+      # In-game counts: what he has thrown earlier in this game (all of it, and his last 15 pitches).
+      hist <- thrown[[as.character(pid)]] %||% character()
+      recent <- utils::tail(hist, INGAME_RECENT_WINDOW)
+      for (k in PITCH_GROUPS) {
+        rows[[length(rows)]][[paste0("gtd_", k)]] <- sum(hist == k)
+        rows[[length(rows)]][[paste0("rec_", k)]] <- sum(recent == k)
+      }
+      thrown[[as.character(pid)]] <- c(hist, if (is.na(code)) "OTHER" else pitch_group_of(code))
       pitcher_pitches[[as.character(pid)]] <- n_before + 1L
       prev[[length(prev) + 1]] <- list(group = if (is.na(code)) "OTHER" else pitch_group_of(code),
                                        result = unname(CALL_RESULT[call]) %||% "other")

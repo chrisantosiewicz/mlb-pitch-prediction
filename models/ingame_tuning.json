@@ -1,0 +1,66 @@
+{
+  "tau_game": 35,
+  "layer_scores": [
+    {
+      "tau_game": 10,
+      "log_loss": 1.310676
+    },
+    {
+      "tau_game": 15,
+      "log_loss": 1.304609
+    },
+    {
+      "tau_game": 25,
+      "log_loss": 1.300715
+    },
+    {
+      "tau_game": 35,
+      "log_loss": 1.300215
+    },
+    {
+      "tau_game": 50,
+      "log_loss": 1.301214
+    },
+    {
+      "log_loss": 1.336535
+    }
+  ],
+  "boost_rounds": 410,
+  "new_2025": [
+    {
+      "segment": "all",
+      "pitches": 707559,
+      "log_loss": 1.20582,
+      "top1": 0.469453
+    },
+    {
+      "segment": "starters",
+      "pitches": 413078,
+      "log_loss": 1.300987,
+      "top1": 0.43807
+    },
+    {
+      "segment": "starters, 2nd+ time through",
+      "pitches": 242191,
+      "log_loss": 1.341043,
+      "top1": 0.412381
+    },
+    {
+      "segment": "relievers",
+      "pitches": 294481,
+      "log_loss": 1.072328,
+      "top1": 0.513476
+    }
+  ],
+  "old_2025": [
+    {
+      "log_loss": 1.235611,
+      "top1": 0.463728,
+      "family_log_loss": 0.806731,
+      "family_top1": 0.595252,
+      "model": "xgboost"
+    }
+  ],
+  "minutes": 30.6,
+  "created": "2026-10-11 22:24:29.051121"
+}

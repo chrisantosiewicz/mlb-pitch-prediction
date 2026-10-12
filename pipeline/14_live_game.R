@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(ggplot2)
 })
-for (f in c("constants", "features", "boost_model", "report", "live", "cleaning_log")) source(file.path("R", paste0(f, ".R")))
+for (f in c("constants", "features", "boost_model", "report", "live", "cleaning_log", "ingame")) source(file.path("R", paste0(f, ".R")))
 
 POLL_SECONDS <- 8
 
@@ -19,7 +19,11 @@ out_csv <- sprintf("data/live/%s_predictions.csv", game_pk)
 dir.create("data/live", recursive = TRUE, showWarnings = FALSE)
 
 d <- load_report_data("app/data")
-model <- xgboost::xgb.load("models/final_xgboost.ubj")
+# The in-game model (adapts to what the pitcher has thrown earlier today) is used
+# when available; --original forces the pre-registered model.
+use_ingame <- file.exists("models/final_xgboost_ingame.ubj") && !("--original" %in% commandArgs(trailingOnly = TRUE))
+model <- xgboost::xgb.load(if (use_ingame) "models/final_xgboost_ingame.ubj" else "models/final_xgboost.ubj")
+tau_game <- if (use_ingame) jsonlite::read_json("models/ingame_tuning.json")$tau_game else NA
 
 pitch_key <- function(at_bat, pitch_number) paste(at_bat, pitch_number, sep = "-")
 
@@ -31,7 +35,7 @@ logged_keys <- if (nrow(log_tbl)) log_tbl$key else character()
 predict_and_log <- function(r, mode) {
   key <- pitch_key(r$at_bat, r$pitch_number)
   if (key %in% logged_keys) return(invisible(NULL))
-  pred <- predict_row(d, model, r)
+  pred <- if (use_ingame) predict_row_ingame(d, model, r, tau_game) else predict_row(d, model, r)
   if (is.null(pred)) return(invisible(NULL))
   probs <- stats::setNames(as.list(round(pred$model, 4)), paste0("p_", pred$pitch_group))
   usual <- stats::setNames(as.list(round(pred$usual, 4)), paste0("u_", pred$pitch_group))
