@@ -50,3 +50,34 @@ writeLines(c("# In-game adaptation: postseason replays", "",
              "## By pitcher", "", md_table(by_pitcher), ""),
            "docs/live/ingame_comparison.md")
 print(by_game); print(by_role); print(curves)
+
+# Inning-by-inning chart per game: in-game model vs. original vs. usual mix.
+saveRDS(results, "data/live/ingame_comparison_results.rds")
+for (g in unique(results$game)) {
+  feed <- fetch_feed(g)
+  teams <- feed$gameData$teams
+  title <- sprintf("%s at %s, %s", teams$away$name, teams$home$name, feed$gameData$datetime$officialDate)
+  by_inning <- results |>
+    dplyr::filter(game == g) |>
+    dplyr::mutate(inning = as.integer(inning)) |>
+    dplyr::group_by(inning) |>
+    dplyr::summarise(`In-game model` = mean(hit), `Original model` = mean(hit_old), `His usual mix` = mean(hit_usual),
+                     n = dplyr::n(), .groups = "drop") |>
+    tidyr::pivot_longer(c(`In-game model`, `Original model`, `His usual mix`), names_to = "who", values_to = "hit") |>
+    dplyr::mutate(who = factor(who, levels = c("In-game model", "Original model", "His usual mix")))
+  overall <- results |> dplyr::filter(game == g) |>
+    dplyr::summarise(a = mean(hit), b = mean(hit_old), c = mean(hit_usual))
+  chart <- ggplot2::ggplot(by_inning, ggplot2::aes(factor(inning), hit, fill = who)) +
+    ggplot2::geom_col(position = ggplot2::position_dodge(width = 0.8), width = 0.75) +
+    ggplot2::scale_fill_manual(values = c("In-game model" = "#c8102e", "Original model" = "#0b2545",
+                                          "His usual mix" = "#9aa8b8")) +
+    ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    ggplot2::labs(title = title,
+                  subtitle = sprintf("Exact pitch called right, by inning. Whole game: in-game model %s, original %s, usual mix %s",
+                                     pct(overall$a), pct(overall$b), pct(overall$c)),
+                  x = "Inning", y = NULL, fill = NULL) +
+    ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(legend.position = "top", plot.title = ggplot2::element_text(face = "bold", colour = "#0b2545"),
+                   panel.grid.major.x = ggplot2::element_blank())
+  ggplot2::ggsave(sprintf("docs/live/%s_ingame.png", g), chart, width = 9, height = 5, dpi = 150, bg = "white")
+}
